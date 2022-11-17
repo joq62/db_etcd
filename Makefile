@@ -25,6 +25,7 @@ build:
 clean:
 	rm -rf  *~ */*~ src/*.beam tests/*.beam
 	rm -rf erl_cra*;
+	rm -rf spec.*;
 	rm -rf tests_ebin
 	rm -rf ebin;
 	rm -rf Mnesia.*
@@ -32,12 +33,14 @@ clean:
 eunit:
 	rm -rf  *~ */*~ src/*.beam tests/*.beam
 	rm -rf erl_cra*;
+	rm -rf spec.*;
 	rm -rf tests_ebin
 	rm -rf ebin;
 	rm -rf Mnesia.*
 #	tests 
 	mkdir tests_ebin;
 	erlc -I include -o tests_ebin tests/*.erl;
+	cp ../specs/* .;
 #  	dependencies
 	erlc -I include -o tests_ebin ../../infra_services/common/src/*.erl;
 #	application

@@ -115,22 +115,3 @@ do(Q) ->
     Result.
 
 %%-------------------------------------------------------------------------
-init_table(SourceNode,DestNode)->
- %   ok=rpc:call(DestNode,?MODULE,create_table,[[DestNode]]),
-    AllHostNames=rpc:call(SourceNode,config,host_all_hostnames,[]),
-    init_table(AllHostNames,SourceNode,DestNode).
-    
-init_table([],_,_)->
-    ok;
-init_table([HostName|T],SourceNode,DestNode)->
-    {atomic,ok}=rpc:call(DestNode,?MODULE,create,
-			 [HostName,
-			  rpc:call(SourceNode,config,host_local_ip,[HostName]),
-			  rpc:call(SourceNode,config,host_public_ip,[HostName]),
-			  rpc:call(SourceNode,config,host_ssh_port,[HostName]),
-			  rpc:call(SourceNode,config,host_uid,[HostName]),
-			  rpc:call(SourceNode,config,host_passwd,[HostName]),
-			  rpc:call(SourceNode,config,host_application_config,[HostName])
-			 ]),
-    
-    init_table(T,SourceNode,DestNode).
