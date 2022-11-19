@@ -1,9 +1,9 @@
+-define(ClusterSpecDir,"cluster_specs").
+
 -define(TABLE,cluster_spec).
 -define(RECORD,?TABLE).
--record(deployment_info,{
-			 name,
-			 cookie,
-			 connect_nodes,
-			 num_pods,
-			 hostnames
-			}).
+-record(?RECORD,{
+		 spec_id,
+		 cluster_name,
+		 cookie
+		}).

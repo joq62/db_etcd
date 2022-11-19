@@ -64,9 +64,10 @@ stop()-> gen_server:call(?MODULE, {stop},infinity).
 %% --------------------------------------------------------------------
 init([]) ->
     IntialNode=node(),
- 
     lib_db_etcd:dynamic_install_start(IntialNode),
  
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+  
     
     {ok, #state{}}.   
  

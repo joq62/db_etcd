@@ -26,13 +26,14 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=host_test:start(),
+    ok=appl_spec_tests:start(),
+    ok=cluster_spec_tests:start(),
     
    
    
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
- %   timer:sleep(2000),
- %   init:stop(),
+    timer:sleep(2000),
+%   init:stop(),
     ok.
 
 

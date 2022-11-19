@@ -1,0 +1,5 @@
+{type,appl_deployment}.
+{appl_name,"web_conbee_c201"}.
+{vsn,"0.1.0"}.
+{num_instances,1}.
+{affinity,["c201"]}.

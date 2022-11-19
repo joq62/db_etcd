@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(host_test).      
+-module(appl_spec_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,16 +26,28 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-  %  ok=init_tests(),
+    ok=from_file_test(),
     ok=read_specs_test(),
-
-    ok=read_tests(),
-   
+  
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
- %   timer:sleep(2000),
- %   init:stop(),
+
     ok.
 
+
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+from_file_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    FromFileResult=db_appl_spec:from_file(),
+    true=lists:member({ok,"math.spec"},FromFileResult),
+
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -45,20 +57,31 @@ start()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
+    ["db_etcd","math"]=lists:sort(db_appl_spec:get_all_id()),
     
-    CreateResult=lists:sort(host_spec:init_table(node())),    
-    [{"c100",{atomic,ok}},
-     {"c200",{atomic,ok}},
-     {"c201",{atomic,ok}},
-     {"c202",{atomic,ok}},
-     {"c300",{atomic,ok}}]=CreateResult,
+    {"math",
+     "math",
+     "0.1.0",
+     math,
+     "https://github.com/joq62/math.git"
+    }=db_appl_spec:read("math"),
+    
+    {ok,"math"}=db_appl_spec:read(appl_name,"math"),
+    {ok,"0.1.0"}=db_appl_spec:read(vsn,"math"),
+    {ok,math}=db_appl_spec:read(app,"math"),
+    {ok,"https://github.com/joq62/math.git"}=db_appl_spec:read(gitpath,"math"),
+    {error,['Key eexists',glurk,"math",db_appl_spec,_]}=db_appl_spec:read(glurk,"math"),
+    {error,[eexist,"glurk",db_appl_spec,_]}=db_appl_spec:read( vsn,"glurk"),
 
-    AllIp=[{HostName,db_host_spec:read(local_ip,HostName)}||HostName<-host_spec:all_names()],
-    [{"c100",{ok,"192.168.1.100"}},
-     {"c200",{ok,"192.168.1.200"}},
-     {"c201",{ok,"192.168.1.201"}},
-     {"c202",{ok,"192.168.1.202"}},
-     {"c300",{ok,"192.168.1.230"}}]=AllIp,
+    {"db_etcd",
+     "db_etcd",
+     "0.1.0",
+     db_etcd,
+     "https://github.com/joq62/db_etcd.git"
+    }=db_appl_spec:read("db_etcd"),
+    
+    
+    
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
@@ -106,9 +129,9 @@ read_tests()->
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
+       
     pong=db_etcd:ping(),
-    ok=db_host_spec:create_table(),
+    ok=db_appl_spec:create_table(),
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
