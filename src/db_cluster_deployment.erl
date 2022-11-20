@@ -67,7 +67,7 @@ read(Key,SpecId)->
 		       worker_hosts->
 			   {ok,WorkerHosts};
 		       Err ->
-			   {error,['Key eexists',Key,SpecId,?MODULE,?LINE]}
+			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
 	   end,
     Return.

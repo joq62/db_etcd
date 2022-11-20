@@ -1,9 +1,9 @@
--module(db_appl_state).
+-module(db_cluster_state).
 -import(lists, [foreach/2]).
 -compile(export_all).
 
 -include_lib("stdlib/include/qlc.hrl").
--include("db_appl_state.hrl").
+-include("db_cluster_state.hrl").
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
@@ -27,12 +27,13 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(DeplId,ApplName,PodsInfo,DeployInfo)->
+create(DeplId,ClusterName,ControllerPod,WorkerPod,DeployInfo)->
     %io:format("DeplId,ApplName,PodsInfo,DeployInfo ~p~n",[{DeplId,ApplName,PodsInfo,DeployInfo,?MODULE,?FUNCTION_NAME}]),
     Record=#?RECORD{
 		    deployment_id=DeplId,
-		    appl_name=ApplName,
-		    pods=[PodsInfo],
+		    cluster_name=ClusterName,
+		    controller_pods=[ControllerPod],
+		    worker_pods=[WorkerPod],
 		    deployment_info=[DeployInfo]
 		   },
     F = fun() -> mnesia:write(Record) end,
@@ -53,12 +54,14 @@ read(Key,DeplId)->
     Return=case read(DeplId) of
 	       []->
 		   {error,[eexist,DeplId,?MODULE,?LINE]};
-	       {_SpecId,ApplName,PodsInfo,DeployInfo} ->
+	       {_DeplId,ClusterName,ControllerPods,WorkerPods,DeployInfo} ->
 		   case  Key of
-		       appl_name->
-			   {ok,ApplName};
-		       pods->
-			   {ok,PodsInfo};
+		       cluster_name->
+			   {ok,ClusterName};
+		       controller_pods->
+			   {ok,ControllerPods};
+		       worker_pods->
+			   {ok,WorkerPods};
 		       deployment_info->
 			   {ok,DeployInfo};
 		       Err ->
@@ -76,12 +79,16 @@ add_info(Key,Info,DeplId)->
 		     mnesia:abort(?TABLE);
 		 [S1]->
 		     R=case Key of
-			   appl_name->
-			       NewRecord=S1#?RECORD{appl_name=Info},
+			   cluster_name->
+			       NewRecord=S1#?RECORD{cluster_name=Info},
 			       {ok,S1,NewRecord};
-			   pods->
-			       NewPods=[Info|lists:delete(Info,S1#?RECORD.pods)],
-			       NewRecord=S1#?RECORD{pods=NewPods},
+			   controller_pods->
+			       NewPods=[Info|lists:delete(Info,S1#?RECORD.controller_pods)],
+			       NewRecord=S1#?RECORD{controller_pods=NewPods},
+			       {ok,S1,NewRecord};
+			   worker_pods->
+			       NewPods=[Info|lists:delete(Info,S1#?RECORD.worker_pods)],
+			       NewRecord=S1#?RECORD{worker_pods=NewPods},
 			       {ok,S1,NewRecord};
 			   deployment_info->
 			       NewDeplInfo=[Info|lists:delete(Info,S1#?RECORD.deployment_info)],
@@ -111,11 +118,15 @@ delete_info(Key,Info,DeplId)->
 		     mnesia:abort(?TABLE);
 		 [S1]->
 		     R=case Key of
-			   appl_name->
+			   cluster_name->
 			       {error,[not_applicable,Key]};
-			   pods->
-			       NewPods=lists:delete(Info,S1#?RECORD.pods),
-			       NewRecord=S1#?RECORD{pods=NewPods},
+			   controller_pods->
+			       NewPods=lists:delete(Info,S1#?RECORD.controller_pods),
+			       NewRecord=S1#?RECORD{controller_pods=NewPods},
+			       {ok,S1,NewRecord};
+			   worker_pods->
+			       NewPods=lists:delete(Info,S1#?RECORD.worker_pods),
+			       NewRecord=S1#?RECORD{worker_pods=NewPods},
 			       {ok,S1,NewRecord};
 			   deployment_info->
 			       NewDeplInfo=lists:delete(Info,S1#?RECORD.deployment_info),
@@ -144,8 +155,9 @@ get_all_id()->
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
     [{X#?RECORD.deployment_id,
-      X#?RECORD.appl_name,
-      X#?RECORD.pods,
+      X#?RECORD.cluster_name,
+      X#?RECORD.controller_pods,
+      X#?RECORD.worker_pods,
       X#?RECORD.deployment_info}||X<-Z].
 
 read(Object)->
@@ -156,8 +168,9 @@ read(Object)->
 		  [];
 	       [X]->
 		   {X#?RECORD.deployment_id,
-		    X#?RECORD.appl_name,
-		    X#?RECORD.pods,
+		    X#?RECORD.cluster_name,
+		    X#?RECORD.controller_pods,
+		    X#?RECORD.worker_pods,
 		    X#?RECORD.deployment_info}
 	   end,
     Result.

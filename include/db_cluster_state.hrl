@@ -1,9 +1,9 @@
--define(TABLE,cluster_spec).
+-define(TABLE,cluster_state).
 -define(RECORD,?TABLE).
--record(deployment_info,{
-			 name,
-			 cookie,
-			 connect_nodes,
-			 num_pods,
-			 hostnames
-			}).
+-record(?RECORD,{
+		 deployment_id,   %u
+		 cluster_name,
+		 controller_pods, %[{Node,PodDir,HostName}]
+		 worker_pods,
+		 deployment_info %[{date(),time()}
+		}).

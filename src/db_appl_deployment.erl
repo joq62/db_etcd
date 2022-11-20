@@ -64,7 +64,7 @@ read(Key,SpecId)->
 		       affinity->
 			   {ok,Affinity};
 		       Err ->
-			   {error,['Key eexists',Key,SpecId,?MODULE,?LINE]}
+			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
 	   end,
     Return.

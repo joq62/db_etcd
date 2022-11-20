@@ -58,7 +58,7 @@ read(Key,SpecId)->
 		       cookie->
 			   {ok,Cookie};
 		       Err ->
-			   {error,['Key eexists',Key,SpecId,?MODULE,?LINE]}
+			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
 	   end,
     Return.
