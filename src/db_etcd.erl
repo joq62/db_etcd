@@ -12,6 +12,8 @@
 %% --------------------------------------------------------------------
 -export([
 	
+	 install_specs/0,
+	 load_specs/0,
 	 ping/0
 
 	]).
@@ -30,6 +32,14 @@
 %% --------------------------------------------------------------------
 ping() ->
     gen_server:call(?SERVER, {ping}).
+
+install_specs()->
+    gen_server:call(?SERVER, {install_specs}).
+    
+load_specs()->
+    gen_server:call(?SERVER, {load_specs}).
+    
+
 
 
 

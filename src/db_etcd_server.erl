@@ -83,6 +83,20 @@ init([]) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 
+handle_call({install_specs},_From, State) ->
+    ok=db_appl_deployment:git_clone(),
+    ok=db_appl_spec:git_clone(),
+    ok=db_cluster_deployment:git_clone(),
+    ok=db_cluster_spec:git_clone(),
+    ok=db_host_spec:git_clone(),
+    
+    Reply=ok,
+    {reply, Reply, State};
+
+handle_call({load_specs},_From, State) ->
+    Reply=glurk,
+    {reply, Reply, State};
+
 handle_call({ping},_From, State) ->
     Reply=pong,
     {reply, Reply, State};

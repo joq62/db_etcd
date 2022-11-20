@@ -140,3 +140,17 @@ from_file([FileName|T],Dir,Acc)->
     from_file(T,Dir,NewAcc).
 			   
 		   
+git_clone()->
+    GitDir=?ApplSpecDir,
+    GitPath=?GitPathApplSpecs,
+    os:cmd("rm -rf "++GitDir),    
+    ok=file:make_dir(GitDir),
+    GitResult=appl:git_clone_to_dir(node(),GitPath,GitDir),
+    Result=case filelib:is_dir(GitDir) of
+	       false->
+		   {error,[failed_to_clone,GitPath,GitResult]};
+	       true->
+		   {ok,GitDir}
+	   end,
+    Result.			   
+		   

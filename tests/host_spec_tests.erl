@@ -26,7 +26,8 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=from_file_test(),
+    ok=install_spec_test(),
+    ok=load_spec_test(),
     ok=read_specs_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
@@ -34,22 +35,33 @@ start()->
     ok.
 
 
-
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-from_file_test()->
+install_spec_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    GitClone=db_host_spec:git_clone(),
+    {ok,"host_specs"}=GitClone,
+   
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+load_spec_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
     FromFileResult=db_host_spec:from_file(),
- 
-    true=lists:member({ok,"c202.spec"},FromFileResult),
+   % gl=FromFileResult,
+    true=lists:member({ok,"c300.spec"},FromFileResult),
 
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
-
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible

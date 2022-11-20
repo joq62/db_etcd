@@ -26,7 +26,8 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=from_file_test(),
+    ok=install_spec_test(),
+    ok=load_spec_test(),
     ok=read_specs_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
@@ -40,7 +41,20 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-from_file_test()->
+install_spec_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    GitClone=db_appl_deployment:git_clone(),
+    {ok,"application_deployments"}=GitClone,
+   
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+load_spec_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
     FromFileResult=db_appl_deployment:from_file(),
