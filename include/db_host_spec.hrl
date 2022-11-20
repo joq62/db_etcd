@@ -1,11 +1,13 @@
+-define(HostSpecDir,"host_specs").
+
 -define(TABLE,host_spec).
--define(RECORD,host_spec).
--record(host_spec,{
-		   hostname,
-		   local_ip,
-		   public_ip,
-		   ssh_port,
-		   uid,
-		   passwd,
-		   application_config
-		  }).
+-define(RECORD,?TABLE).
+-record(?RECORD,{
+		 spec_id,
+		 hostname,
+		 local_ip,
+		 ssh_port,
+		 uid,
+		 passwd,
+		 application_config
+		}).
