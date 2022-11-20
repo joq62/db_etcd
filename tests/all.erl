@@ -28,8 +28,11 @@ start()->
     ok=setup(),
     ok=appl_spec_tests:start(),
     ok=appl_deployment_tests:start(),
+    ok=appl_state_tests:start(),
+
     ok=cluster_spec_tests:start(),
     ok=cluster_deployment_tests:start(),
+
     ok=host_spec_tests:start(),
     
    
