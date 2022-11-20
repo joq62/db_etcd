@@ -26,15 +26,18 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=appl_spec_tests:start(),
-    ok=appl_deployment_tests:start(),
+
+    ok=install_tests:start(),
+
+    ok=appl_spec_2_tests:start(),
+    ok=appl_deployment_2_tests:start(),
     ok=appl_state_tests:start(),
 
-    ok=cluster_spec_tests:start(),
-    ok=cluster_deployment_tests:start(),
+    ok=cluster_spec_2_tests:start(),
+    ok=cluster_deployment_2_tests:start(),
     ok=cluster_state_tests:start(),
 
-    ok=host_spec_tests:start(),
+    ok=host_spec_2_tests:start(),
     
    
    

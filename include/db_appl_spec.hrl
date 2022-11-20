@@ -1,4 +1,5 @@
 -define(ApplSpecDir,"application_specs").
+-define(GitPathApplSpecs,"https://github.com/joq62/application_specs.git").
 
 -define(TABLE,application_spec).
 -define(RECORD,application_spec).

@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(appl_deployment_tests).      
+-module(cluster_deployment_2_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,41 +26,10 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=install_spec_test(),
-    ok=load_spec_test(),
     ok=read_specs_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
-    ok.
-
-
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-install_spec_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    GitClone=db_appl_deployment:git_clone(),
-    {ok,"application_deployments"}=GitClone,
-   
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-load_spec_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    FromFileResult=db_appl_deployment:from_file(),
-    true=lists:member({ok,"math.deployment"},FromFileResult),
-
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
 
 %% --------------------------------------------------------------------
@@ -71,19 +40,39 @@ load_spec_test()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["math"]=lists:sort(db_appl_deployment:get_all_id()),
+    ["many_node","single_node"]=lists:sort(db_cluster_deployment:get_all_id()),
+
+    {"many_node","test2",3,["c100","c200"],20,[]}=db_cluster_deployment:read("many_node"),
     
-    {"math","math","0.1.0",2,[]}=db_appl_deployment:read("math"),
+    {ok,"test2"}=db_cluster_deployment:read(cluster_name,"many_node"),
+    {ok,3}=db_cluster_deployment:read(num_controllers,"many_node"),
+    {ok,["c100","c200"]}=db_cluster_deployment:read(controller_hosts,"many_node"),
+    {ok,20}=db_cluster_deployment:read(num_workers,"many_node"),
+    {ok,[]}=db_cluster_deployment:read( worker_hosts,"many_node"),
+  
+
+    {ok,2}=db_cluster_deployment:read(num_controllers,"single_node"),
+
+    {error,[eexist,"glurk",db_cluster_deployment,_]}=db_cluster_deployment:read(cluster_name,"glurk"),
+    {error,['Key eexists',glurk,"single_node",db_cluster_deployment,_]}=db_cluster_deployment:read(glurk,"single_node"),
+ 
+    {"single_node","test1",2,[],6,[]}=db_cluster_deployment:read("single_node"),
     
-    {ok,"math"}=db_appl_deployment:read(appl_name,"math"),
-    {ok,"0.1.0"}=db_appl_deployment:read(vsn,"math"),
-    {ok,2}=db_appl_deployment:read(num_instances,"math"),
-    {ok,[]}=db_appl_deployment:read(affinity,"math"),
-    {error,['Key eexists',glurk,"math",db_appl_deployment,_]}=db_appl_deployment:read(glurk,"math"),
-    {error,[eexist,"glurk",db_appl_deployment,_]}=db_appl_deployment:read( vsn,"glurk"),
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -102,8 +91,7 @@ setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
        
     pong=db_etcd:ping(),
-    ok=db_appl_deployment:create_table(),
-    
+        
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok.

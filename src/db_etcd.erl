@@ -12,6 +12,8 @@
 %% --------------------------------------------------------------------
 -export([
 	
+	 install/0,
+	 load/0,
 	 ping/0
 
 	]).
@@ -30,6 +32,14 @@
 %% --------------------------------------------------------------------
 ping() ->
     gen_server:call(?SERVER, {ping}).
+
+install()->
+    gen_server:call(?SERVER, {install}).
+    
+load()->
+    gen_server:call(?SERVER, {load}).
+    
+
 
 
 
