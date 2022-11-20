@@ -37,26 +37,27 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["many_node","single_node"]=lists:sort(db_cluster_deployment:get_all_id()),
+    ["single_c100"]=lists:sort(db_cluster_deployment:get_all_id()),
 
-    {"many_node","test2",3,["c100","c200"],20,[]}=db_cluster_deployment:read("many_node"),
+    {"single_c100",
+     "cookie_single_c100",
+     "single_c100",1,["c100"],6,["c100"]}=db_cluster_deployment:read("single_c100"),
     
-    {ok,"test2"}=db_cluster_deployment:read(cluster_name,"many_node"),
-    {ok,3}=db_cluster_deployment:read(num_controllers,"many_node"),
-    {ok,["c100","c200"]}=db_cluster_deployment:read(controller_hosts,"many_node"),
-    {ok,20}=db_cluster_deployment:read(num_workers,"many_node"),
-    {ok,[]}=db_cluster_deployment:read( worker_hosts,"many_node"),
+    {ok,"cookie_single_c100"}=db_cluster_deployment:read(cookie,"single_c100"),
+    {ok,"single_c100"}=db_cluster_deployment:read(dir,"single_c100"),
+    {ok,1}=db_cluster_deployment:read(num_controllers,"single_c100"),
+    {ok,["c100"]}=db_cluster_deployment:read(controller_hosts,"single_c100"),
+    {ok,6}=db_cluster_deployment:read(num_workers,"single_c100"),
+    {ok,["c100"]}=db_cluster_deployment:read( worker_hosts,"single_c100"),
   
 
-    {ok,2}=db_cluster_deployment:read(num_controllers,"single_node"),
-
     {error,[eexist,"glurk",db_cluster_deployment,_]}=db_cluster_deployment:read(cluster_name,"glurk"),
-    {error,['Key eexists',glurk,"single_node",db_cluster_deployment,_]}=db_cluster_deployment:read(glurk,"single_node"),
+    {error,['Key eexists',glurk,"single_c100",db_cluster_deployment,_]}=db_cluster_deployment:read(glurk,"single_c100"),
  
-    {"single_node","test1",2,[],6,[]}=db_cluster_deployment:read("single_node"),
     
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
