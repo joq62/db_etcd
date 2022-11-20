@@ -150,7 +150,7 @@ delete_info(Key,Info,DeplId)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [Id||{?RECORD,Id,_ApplName,_PodsInfo,_DeployInfo}<-Z].
+    [X#?RECORD.deployment_id||X<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
