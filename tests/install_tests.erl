@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(all).      
+-module(install_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,24 +26,12 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-
-    ok=install_tests:start(),
-
-    ok=appl_spec_2_tests:start(),
-    ok=appl_deployment_2_tests:start(),
-    ok=appl_state_tests:start(),
-
-    ok=cluster_spec_2_tests:start(),
-    ok=cluster_deployment_2_tests:start(),
-    ok=cluster_state_tests:start(),
-
-    ok=host_spec_2_tests:start(),
-    
-   
-   
+    ok=install_spec_test(),
+    ok=load_spec_test(),
+  
+  
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    timer:sleep(2000),
-   init:stop(),
+
     ok.
 
 
@@ -52,8 +40,33 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+install_spec_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    ok=db_etcd:install(),
+  
+   
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+load_spec_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    LoadResult=db_etcd:load(),
+    {host_spec,Ok,_Err}=lists:keyfind(host_spec,1,LoadResult),
+    true=lists:member("c100.spec",Ok),
 
-
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -70,10 +83,9 @@ start()->
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    {ok,_}=db_etcd_server:start(),
+       
     pong=db_etcd:ping(),
-    
+        
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok.

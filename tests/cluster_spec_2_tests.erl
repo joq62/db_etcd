@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(all).      
+-module(cluster_spec_2_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,25 +26,12 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-
-    ok=install_tests:start(),
-
-    ok=appl_spec_2_tests:start(),
-    ok=appl_deployment_2_tests:start(),
-    ok=appl_state_tests:start(),
-
-    ok=cluster_spec_2_tests:start(),
-    ok=cluster_deployment_2_tests:start(),
-    ok=cluster_state_tests:start(),
-
-    ok=host_spec_2_tests:start(),
-    
-   
-   
+    ok=read_specs_test(),
+  
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    timer:sleep(2000),
-   init:stop(),
+
     ok.
+
 
 
 %% --------------------------------------------------------------------
@@ -52,8 +39,36 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+read_specs_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    ["test_1","test_2"]=lists:sort(db_cluster_spec:get_all_id()),
 
+    {"test_1","test1","test1_cookie"}=db_cluster_spec:read("test_1"),
+    
+    {ok,"test1"}=db_cluster_spec:read(cluster_name,"test_1"),
+    {ok,"test1_cookie"}=db_cluster_spec:read(cookie,"test_1"),
 
+    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
+    {error,['Key eexists',glurk,"test_1",db_cluster_spec,_]}=db_cluster_spec:read(glurk,"test_1"),
+ 
+    {"test_2","test2","test2_cookie"}=db_cluster_spec:read("test_2"),
+    
+    
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -70,8 +85,7 @@ start()->
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    {ok,_}=db_etcd_server:start(),
+       
     pong=db_etcd:ping(),
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
