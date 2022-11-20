@@ -1,7 +1,0 @@
-{appl_deployment,"math",
- [{appl_name,"math"},
-  {vsn,"0.1.0"},	
-  {num_instances,2},
-  {affinity,[]}
- ]
-}.

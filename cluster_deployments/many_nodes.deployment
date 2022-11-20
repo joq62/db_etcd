@@ -1,8 +1,0 @@
-{cluster_deployment,"many_node",
- [{cluster_name,"test2"},
-  {num_controllers,3},	
-  {controller_hosts,["c100","c200"]},
-  {num_workers,20},
-  {worker_hosts,[]}
- ]
-}.
