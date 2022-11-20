@@ -1,8 +1,0 @@
-{cluster_deployment,"single_node",
- [{cluster_name,"test1"},
-  {num_controllers,2},	
-  {controller_hosts,[]},
-  {num_workers,6},
-  {worker_hosts,[]}
- ]
-}.
