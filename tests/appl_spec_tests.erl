@@ -74,10 +74,10 @@ read_specs_test()->
     {error,[eexist,"glurk",db_appl_spec,_]}=db_appl_spec:read( vsn,"glurk"),
 
     {"db_etcd",
-     "db_etcd",
+     "db_etcd_app",
      "0.1.0",
-     db_etcd,
-     "https://github.com/joq62/db_etcd.git"
+     db_etcd_app,
+     "https://github.com/joq62/db_etcd_app.git"
     }=db_appl_spec:read("db_etcd"),
     
     
@@ -86,33 +86,6 @@ read_specs_test()->
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
 
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-read_tests()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    true=db_host_spec:member("c100"),
-    false=db_host_spec:member("glurk"),
-    {ok,"192.168.1.100"}=db_host_spec:read(local_ip,"c100"),
-    {ok,"192.168.1.200"}=db_host_spec:read(local_ip,"c200"),
-    {ok,"joqhome.asuscomm.com"}=db_host_spec:read(public_ip,"c100"),
-    {ok,22}=db_host_spec:read(ssh_port,"c100"),
-    {ok,_ }=db_host_spec:read(uid,"c100"),
-    {ok,_}=db_host_spec:read(passwd,"c200"),
-    {ok,[]}=db_host_spec:read(application_config,"c200"),
-    {error,['Key eexists',glurk,read,db_host_spec,_]}=db_host_spec:read(glurk,"c100"),   
-    
-      
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
