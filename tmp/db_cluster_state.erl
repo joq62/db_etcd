@@ -1,4 +1,4 @@
--module(db_host_spec).
+-module(db_cluster_state).
 -import(lists, [foreach/2]).
 -compile(export_all).
 
@@ -27,22 +27,22 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig)->
+create(HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig)->
     Record=#?RECORD{
-		    spec_id=SpecId,
 		    hostname=HostName,
 		    local_ip=LocalIp,
+		    public_ip=PublicIp,
 		    ssh_port=SshPort,
 		    uid=Uid,
 		    passwd=Passwd,
-		    application_config=ApplConfig
+		    application_config=ApplicationConfig
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
 
-member(SpecId)->
+member(HostName)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.spec_id==SpecId])),
+		     X#?RECORD.hostname==HostName])),
     Member=case Z of
 	       []->
 		   false;
@@ -51,16 +51,16 @@ member(SpecId)->
 	   end,
     Member.
 
-read(Key,SpecId)->
-    Return=case read(SpecId) of
+read(Key,HostName)->
+    Return=case read(HostName) of
 	       []->
-		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig} ->
+		   {error,[eexist,HostName,?FUNCTION_NAME,?MODULE,?LINE]};
+	       {_HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig} ->
 		   case  Key of
-		       hostname->
-			   {ok,HostName};
 		       local_ip->
 			   {ok,LocalIp};
+		       public_ip->
+			   {ok,PublicIp};
 		       ssh_port->
 			   {ok,SshPort};
 		       uid->
@@ -68,30 +68,30 @@ read(Key,SpecId)->
 		       passwd->
 			   {ok,Passwd};
 		       application_config->
-			   {ok,ApplConfig};
+			   {ok,ApplicationConfig};
 		       Err ->
-			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
+			   {error,['Key eexists',Err,?FUNCTION_NAME,?MODULE,?LINE]}
 		   end
 	   end,
     Return.
 
 
-get_all_id()->
+get_all_hostnames()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_HostName,_LocalIp,_SshPort,_Uid,_Passwd,_ApplConfig}<-Z].
+    [HostName||{?RECORD,HostName,_LocalIp,_PublicIp,_SshPort,_Uid,_Passwd,_ApplicationConfig}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z].
+    [{HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig}||{?RECORD,HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig}<-Z].
 
 read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.spec_id==Object])),
+		     X#?RECORD.hostname==Object])),
     Result=case Z of
 	       []->
 		  [];
 	       _->
-		   [Info]=[{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z],
+		   [Info]=[{HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig}||{?RECORD,HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig}<-Z],
 		   Info
 	   end,
     Result.
@@ -115,38 +115,3 @@ do(Q) ->
     Result.
 
 %%-------------------------------------------------------------------------
-from_file()->
-    from_file(?HostSpecDir).
-
-from_file(ApplSpecDir)->
-    {ok,FileNames}=file:list_dir(ApplSpecDir),
-    from_file(FileNames,ApplSpecDir,[]).
-
-from_file([],_,Acc)->
-    Acc;		     
-from_file([FileName|T],Dir,Acc)->
-    FullFileName=filename:join(Dir,FileName),
-    NewAcc=case file:consult(FullFileName) of
-	       {error,Reason}->
-		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{host_spec,SpecId,Info}]}->
-		   {hostname,HostName}=lists:keyfind(hostname,1,Info),
-		   {local_ip,LocalIp}=lists:keyfind(local_ip,1,Info),
-		   {ssh_port,SshPort}=lists:keyfind(ssh_port,1,Info),
-		   {uid,Uid}=lists:keyfind(uid,1,Info),
-		   {passwd,Passwd}=lists:keyfind(passwd,1,Info),
-		   {application_config,ApplConfig}=lists:keyfind(application_config,1,Info),
-		 
-		 
-		   case create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig) of
-		       {atomic,ok}->
-			   [{ok,FileName}|Acc];
-		       {error,Reason}->
-			   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc]
-		   end;
-	       {ok,NotAnApplSpecFile} -> 
-		   [{error,[not_appl_spec_file,NotAnApplSpecFile,FileName,Dir,?MODULE,?LINE]}|Acc]
-	   end,
-    from_file(T,Dir,NewAcc).
-			   
-		   

@@ -1,9 +1,9 @@
--module(db_host_spec).
+-module(db_appl_deployment).
 -import(lists, [foreach/2]).
 -compile(export_all).
 
 -include_lib("stdlib/include/qlc.hrl").
--include("db_host_spec.hrl").
+-include("db_appl_deployment.hrl").
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
@@ -27,15 +27,13 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig)->
+create(SpecId,ApplName,Vsn,NumInstances,Affinity)->
     Record=#?RECORD{
 		    spec_id=SpecId,
-		    hostname=HostName,
-		    local_ip=LocalIp,
-		    ssh_port=SshPort,
-		    uid=Uid,
-		    passwd=Passwd,
-		    application_config=ApplConfig
+		    appl_name=ApplName,
+		    vsn=Vsn,
+		    num_instances=NumInstances,
+		    affinity=Affinity
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -55,20 +53,16 @@ read(Key,SpecId)->
     Return=case read(SpecId) of
 	       []->
 		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig} ->
+	       {_SpecId,ApplName,Vsn,NumInstances,Affinity} ->
 		   case  Key of
-		       hostname->
-			   {ok,HostName};
-		       local_ip->
-			   {ok,LocalIp};
-		       ssh_port->
-			   {ok,SshPort};
-		       uid->
-			   {ok,Uid};
-		       passwd->
-			   {ok,Passwd};
-		       application_config->
-			   {ok,ApplConfig};
+		        appl_name->
+			   {ok,ApplName};
+		       vsn->
+			   {ok,Vsn};
+		       num_instances->
+			   {ok,NumInstances};
+		       affinity->
+			   {ok,Affinity};
 		       Err ->
 			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
@@ -78,11 +72,11 @@ read(Key,SpecId)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_HostName,_LocalIp,_SshPort,_Uid,_Passwd,_ApplConfig}<-Z].
+    [SpecId||{?RECORD,SpecId,_ApplName,_Vsn,_NumInstances,_Affinity}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z].
+    [{SpecId,ApplName,Vsn,NumInstances,Affinity}||{?RECORD,SpecId,ApplName,Vsn,NumInstances,Affinity}<-Z].
 
 read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -91,7 +85,7 @@ read(Object)->
 	       []->
 		  [];
 	       _->
-		   [Info]=[{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z],
+		   [Info]=[{SpecId,ApplName,Vsn,NumInstances,Affinity}||{?RECORD,SpecId,ApplName,Vsn,NumInstances,Affinity}<-Z],
 		   Info
 	   end,
     Result.
@@ -116,11 +110,11 @@ do(Q) ->
 
 %%-------------------------------------------------------------------------
 from_file()->
-    from_file(?HostSpecDir).
+    from_file(?ApplDeploymentDir).
 
-from_file(ApplSpecDir)->
-    {ok,FileNames}=file:list_dir(ApplSpecDir),
-    from_file(FileNames,ApplSpecDir,[]).
+from_file(Dir)->
+    {ok,FileNames}=file:list_dir(Dir),
+    from_file(FileNames,Dir,[]).
 
 from_file([],_,Acc)->
     Acc;		     
@@ -129,16 +123,12 @@ from_file([FileName|T],Dir,Acc)->
     NewAcc=case file:consult(FullFileName) of
 	       {error,Reason}->
 		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{host_spec,SpecId,Info}]}->
-		   {hostname,HostName}=lists:keyfind(hostname,1,Info),
-		   {local_ip,LocalIp}=lists:keyfind(local_ip,1,Info),
-		   {ssh_port,SshPort}=lists:keyfind(ssh_port,1,Info),
-		   {uid,Uid}=lists:keyfind(uid,1,Info),
-		   {passwd,Passwd}=lists:keyfind(passwd,1,Info),
-		   {application_config,ApplConfig}=lists:keyfind(application_config,1,Info),
-		 
-		 
-		   case create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig) of
+	       {ok,[{appl_deployment,SpecId,Info}]}->
+		   {appl_name,ApplName}=lists:keyfind(appl_name,1,Info),
+		   {vsn,Vsn}=lists:keyfind(vsn,1,Info),
+		   {num_instances,NumInstances}=lists:keyfind(num_instances,1,Info),
+		   {affinity,Affinity}=lists:keyfind(affinity,1,Info),
+		   case create(SpecId,ApplName,Vsn,NumInstances,Affinity) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->

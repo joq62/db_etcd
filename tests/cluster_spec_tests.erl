@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(host_test).      
+-module(cluster_spec_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,13 +26,13 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=init_tests(),
-    ok=read_tests(),
-   
+    ok=from_file_test(),
+    ok=read_specs_test(),
+  
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
- %   timer:sleep(2000),
- %   init:stop(),
+
     ok.
+
 
 
 %% --------------------------------------------------------------------
@@ -40,41 +40,51 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-read_tests()->
+from_file_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    true=db_host_spec:member("c100"),
-    false=db_host_spec:member("glurk"),
-    {ok,"192.168.1.100"}=db_host_spec:read(local_ip,"c100"),
-    {ok,"192.168.1.200"}=db_host_spec:read(local_ip,"c200"),
-    {ok,"public.com"}=db_host_spec:read(public_ip,"c100"),
-    {ok,22}=db_host_spec:read(ssh_port,"c100"),
-    {ok,uid100 }=db_host_spec:read(uid,"c100"),
-    {ok,passwd200}=db_host_spec:read(passwd,"c200"),
-    {ok,[]}=db_host_spec:read(application_config,"c100"),
-    {error,['Key eexists',glurk,read,db_host_spec,_]}=db_host_spec:read(glurk,"c100"),   
-    
-      
+    FromFileResult=db_cluster_spec:from_file(),
+ 
+    true=lists:member({ok,"test_1.spec"},FromFileResult),
+
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
+
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-init_tests()->
+read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ok=db_host_spec:create_table(),
+    ["test_1","test_2"]=lists:sort(db_cluster_spec:get_all_id()),
+
+    {"test_1","test1","test1_cookie"}=db_cluster_spec:read("test_1"),
     
-   % db_host_spec:create(HostName,LocalIp,PublicIp,SshPort,Uid,Passwd,ApplicationConfig),
-    {atomic,ok}=db_host_spec:create("c100","192.168.1.100","public.com",22,uid100,passwd100,[]),
-    {atomic,ok}=db_host_spec:create("c200","192.168.1.200","public.com",22,uid200,passwd200,[]),
+    {ok,"test1"}=db_cluster_spec:read(cluster_name,"test_1"),
+    {ok,"test1_cookie"}=db_cluster_spec:read(cookie,"test_1"),
+
+    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
+    {error,['Key eexists',glurk,"test_1",db_cluster_spec,_]}=db_cluster_spec:read(glurk,"test_1"),
+ 
+    {"test_2","test2","test2_cookie"}=db_cluster_spec:read("test_2"),
     
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
 
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -91,8 +101,9 @@ init_tests()->
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
+       
     pong=db_etcd:ping(),
+    ok=db_cluster_spec:create_table(),
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 

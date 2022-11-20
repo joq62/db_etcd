@@ -1,9 +1,9 @@
--module(db_host_spec).
+-module(db_cluster_spec).
 -import(lists, [foreach/2]).
 -compile(export_all).
 
 -include_lib("stdlib/include/qlc.hrl").
--include("db_host_spec.hrl").
+-include("db_cluster_spec.hrl").
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
@@ -27,15 +27,11 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig)->
+create(SpecId,ClusterName,Cookie)->
     Record=#?RECORD{
 		    spec_id=SpecId,
-		    hostname=HostName,
-		    local_ip=LocalIp,
-		    ssh_port=SshPort,
-		    uid=Uid,
-		    passwd=Passwd,
-		    application_config=ApplConfig
+		    cluster_name=ClusterName,
+		    cookie=Cookie
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -55,20 +51,12 @@ read(Key,SpecId)->
     Return=case read(SpecId) of
 	       []->
 		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig} ->
+	       {_SpecId,ClusterName,Cookie} ->
 		   case  Key of
-		       hostname->
-			   {ok,HostName};
-		       local_ip->
-			   {ok,LocalIp};
-		       ssh_port->
-			   {ok,SshPort};
-		       uid->
-			   {ok,Uid};
-		       passwd->
-			   {ok,Passwd};
-		       application_config->
-			   {ok,ApplConfig};
+		       cluster_name->
+			   {ok,ClusterName};
+		       cookie->
+			   {ok,Cookie};
 		       Err ->
 			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
@@ -78,11 +66,11 @@ read(Key,SpecId)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_HostName,_LocalIp,_SshPort,_Uid,_Passwd,_ApplConfig}<-Z].
+    [SpecId||{?RECORD,SpecId,_,_}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z].
+    [{SpecId,ClusterName,Cookie}||{?RECORD,SpecId,ClusterName,Cookie}<-Z].
 
 read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -91,7 +79,7 @@ read(Object)->
 	       []->
 		  [];
 	       _->
-		   [Info]=[{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z],
+		   [Info]=[{SpecId,ClusterName,Cookie}||{?RECORD,SpecId,ClusterName,Cookie}<-Z],
 		   Info
 	   end,
     Result.
@@ -116,11 +104,11 @@ do(Q) ->
 
 %%-------------------------------------------------------------------------
 from_file()->
-    from_file(?HostSpecDir).
+    from_file(?ClusterSpecDir).
 
-from_file(ApplSpecDir)->
-    {ok,FileNames}=file:list_dir(ApplSpecDir),
-    from_file(FileNames,ApplSpecDir,[]).
+from_file(Dir)->
+    {ok,FileNames}=file:list_dir(Dir),
+    from_file(FileNames,Dir,[]).
 
 from_file([],_,Acc)->
     Acc;		     
@@ -129,16 +117,10 @@ from_file([FileName|T],Dir,Acc)->
     NewAcc=case file:consult(FullFileName) of
 	       {error,Reason}->
 		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{host_spec,SpecId,Info}]}->
-		   {hostname,HostName}=lists:keyfind(hostname,1,Info),
-		   {local_ip,LocalIp}=lists:keyfind(local_ip,1,Info),
-		   {ssh_port,SshPort}=lists:keyfind(ssh_port,1,Info),
-		   {uid,Uid}=lists:keyfind(uid,1,Info),
-		   {passwd,Passwd}=lists:keyfind(passwd,1,Info),
-		   {application_config,ApplConfig}=lists:keyfind(application_config,1,Info),
-		 
-		 
-		   case create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig) of
+	       {ok,[{cluster_spec,SpecId,Info}]}->
+		   {cluster_name,ClusterName}=lists:keyfind(cluster_name,1,Info),
+		   {cookie,Cookie}=lists:keyfind(cookie,1,Info),
+		   case create(SpecId,ClusterName,Cookie) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->
@@ -148,5 +130,5 @@ from_file([FileName|T],Dir,Acc)->
 		   [{error,[not_appl_spec_file,NotAnApplSpecFile,FileName,Dir,?MODULE,?LINE]}|Acc]
 	   end,
     from_file(T,Dir,NewAcc).
-			   
-		   
+	
+  
