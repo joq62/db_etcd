@@ -32,6 +32,7 @@ start()->
 
     ok=cluster_spec_tests:start(),
     ok=cluster_deployment_tests:start(),
+    ok=cluster_state_tests:start(),
 
     ok=host_spec_tests:start(),
     
