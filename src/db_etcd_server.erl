@@ -65,11 +65,12 @@ stop()-> gen_server:call(?MODULE, {stop},infinity).
 init([]) ->
     IntialNode=node(),
     lib_db_etcd:dynamic_install_start(IntialNode),
+    
  
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
   
     
-    {ok, #state{}}.   
+    {ok, #state{},0}.   
  
 
 %% --------------------------------------------------------------------
@@ -84,49 +85,33 @@ init([]) ->
 %% --------------------------------------------------------------------
 
 handle_call({install},_From, State) ->
- 
-    {ok,"application_deployments"}=db_appl_deployment:git_clone(),
-    {ok,"application_specs"}=db_appl_spec:git_clone(),
-    {ok,"cluster_deployments"}=db_cluster_deployment:git_clone(),
-    {ok,"cluster_specs"}=db_cluster_spec:git_clone(),
-    {ok,"host_specs"}=db_host_spec:git_clone(),
-    
-    Reply=ok,
-    {reply, Reply, State};
-
-handle_call({load},_From, State) ->
     ok=db_appl_deployment:create_table(),
-    AppDeployment=db_appl_deployment:from_file(), 
+    AppDeployment=db_appl_deployment:git_clone_load(),
     Ok_ApplDeploment=[X||{ok,X}<-AppDeployment],
     Err_ApplDeploment=[X||{error,X}<-AppDeployment],
-
+    
     ok=db_appl_spec:create_table(),
-    ApplSpec=db_appl_spec:from_file(),
+    ApplSpec=db_appl_spec:git_clone_load(),
     Ok_ApplSpec=[X||{ok,X}<-ApplSpec],
     Err_ApplSpec=[X||{error,X}<-ApplSpec],
 
     ok=db_cluster_deployment:create_table(),
-    ClusterDeployment=db_cluster_deployment:from_file(),
+    ClusterDeployment=db_cluster_deployment:git_clone_load(),
     Ok_ClusterDeployment=[X||{ok,X}<-ClusterDeployment],
     Err_ClusterDeployment=[X||{error,X}<-ClusterDeployment],
 
-    ok=db_cluster_spec:create_table(),
-    ClusterSpec=db_cluster_spec:from_file(),
-    Ok_ClusterSpec=[X||{ok,X}<-ClusterSpec],
-    Err_ClusterSpec=[X||{error,X}<-ClusterSpec],
-
     ok=db_host_spec:create_table(),
-    HostSpec=db_host_spec:from_file(),
+    HostSpec=db_host_spec:git_clone_load(),
     Ok_HostSpec=[X||{ok,X}<-HostSpec],
     Err_HostSpec=[X||{error,X}<-HostSpec],
 
     Reply=[{appl_deployment,Ok_ApplDeploment,Err_ApplDeploment},
 	   {appl_spec,Ok_ApplSpec,Err_ApplSpec},
 	   {cluster_deployment,Ok_ClusterDeployment,Err_ClusterDeployment},
-	   {cluster_spec,Ok_ClusterSpec,Err_ClusterSpec},
 	   {host_spec,Ok_HostSpec,Err_HostSpec}],
 
     {reply, Reply, State};
+
 
 handle_call({ping},_From, State) ->
     Reply=pong,
@@ -155,6 +140,7 @@ handle_cast(Msg, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 handle_info(timeout, State) ->
+    rpc:cast(node(),db_etcd,install,[]),
     {noreply, State};
 
    

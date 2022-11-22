@@ -33,7 +33,6 @@ start()->
     ok=appl_deployment_2_tests:start(),
     ok=appl_state_tests:start(),
 
-    ok=cluster_spec_2_tests:start(),
     ok=cluster_deployment_2_tests:start(),
     ok=cluster_state_tests:start(),
 

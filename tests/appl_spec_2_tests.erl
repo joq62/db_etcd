@@ -40,7 +40,7 @@ start()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["db_etcd","math"]=lists:sort(db_appl_spec:get_all_id()),
+    ["db_etcd"|_]=lists:sort(db_appl_spec:get_all_id()),
     
     {"math",
      "math",

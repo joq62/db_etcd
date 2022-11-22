@@ -5,6 +5,7 @@ all:
 	rm -rf  application_specs cluster_specs host_specs;
 	rm -rf  application_deployments cluster_deployments;	
 	rm -rf Mnesia.*;
+	rm -rf *.dir;
 	mkdir ebin;
 	erlc -I include -o ebin src/*.erl;		
 	rm -rf ebin;
@@ -29,7 +30,8 @@ clean:
 	rm -rf spec.*;
 	rm -rf tests_ebin
 	rm -rf ebin;
-	rm -rf Mnesia.*
+	rm -rf Mnesia.*;
+	rm -rf *.dir;
 
 eunit:
 	rm -rf  *~ */*~ src/*.beam tests/*.beam
@@ -39,6 +41,7 @@ eunit:
 	rm -rf tests_ebin
 	rm -rf ebin;
 	rm -rf Mnesia.*;
+	rm -rf *.dir;
 #	tests 
 	mkdir tests_ebin;
 	erlc -I include -o tests_ebin tests/*.erl;

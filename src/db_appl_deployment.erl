@@ -109,6 +109,39 @@ do(Q) ->
     Result.
 
 %%-------------------------------------------------------------------------
+git_clone_load()->
+    ok=create_table(),
+    Result=case git_clone() of
+	       {error,Reason}->
+		   {error,Reason};
+	       {ok,TempDirName,SpecDir}->
+		   case from_file(SpecDir) of
+		       {error,Reason}->
+			   os:cmd("rm -rf "++TempDirName),	
+			   {error,Reason};
+		       LoadResult->
+			   os:cmd("rm -rf "++TempDirName),	
+			   LoadResult
+		   end
+	   end,
+    Result.
+
+git_clone()->
+    TempDirName=erlang:integer_to_list(os:system_time(microsecond),36)++".dir",
+    ok=file:make_dir(TempDirName),
+    GitDir=filename:join(TempDirName,?ApplDeploymentDir),
+    GitPath=?GitPathApplDeployments,
+    os:cmd("rm -rf "++GitDir),    
+    ok=file:make_dir(GitDir),
+    GitResult=appl:git_clone_to_dir(node(),GitPath,GitDir),
+    Result=case filelib:is_dir(GitDir) of
+	       false->
+		   {error,[failed_to_clone,GitPath,GitResult]};
+	       true->
+		   {ok,TempDirName,GitDir}
+	   end,
+    Result.	
+
 from_file()->
     from_file(?ApplDeploymentDir).
 
@@ -138,19 +171,3 @@ from_file([FileName|T],Dir,Acc)->
 		   [{error,[not_appl_spec_file,NotAnApplSpecFile,FileName,Dir,?MODULE,?LINE]}|Acc]
 	   end,
     from_file(T,Dir,NewAcc).
-
-
-git_clone()->
-    GitDir=?ApplDeploymentDir,
-    GitPath=?GitPathApplDeployments,
-    os:cmd("rm -rf "++GitDir),    
-    ok=file:make_dir(GitDir),
-    GitResult=appl:git_clone_to_dir(node(),GitPath,GitDir),
-    Result=case filelib:is_dir(GitDir) of
-	       false->
-		   {error,[failed_to_clone,GitPath,GitResult]};
-	       true->
-		   {ok,GitDir}
-	   end,
-    Result.			   
-		   

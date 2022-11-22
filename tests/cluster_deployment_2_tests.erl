@@ -41,23 +41,29 @@ start()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["single_c100"]=lists:sort(db_cluster_deployment:get_all_id()),
+    true=lists:member("many_c100_c200",lists:sort(db_cluster_deployment:get_all_id())),
 
-    {"single_c100",
-     "cookie_single_c100",
-     "single_c100",1,["c100"],6,["c100"]}=db_cluster_deployment:read("single_c100"),
+    {"many_c100_c200",
+     "cookie_many_c100_c200",
+     "many_c100_c200",
+     2,["c100","c200"],
+     6,["c100","c200"]}=db_cluster_deployment:read("many_c100_c200"),
     
-    {ok,"cookie_single_c100"}=db_cluster_deployment:read(cookie,"single_c100"),
-    {ok,"single_c100"}=db_cluster_deployment:read(dir,"single_c100"),
-    {ok,1}=db_cluster_deployment:read(num_controllers,"single_c100"),
-    {ok,["c100"]}=db_cluster_deployment:read(controller_hosts,"single_c100"),
-    {ok,6}=db_cluster_deployment:read(num_workers,"single_c100"),
-    {ok,["c100"]}=db_cluster_deployment:read( worker_hosts,"single_c100"),
+    {ok,"cookie_many_c100_c200"}=db_cluster_deployment:read(cookie,"many_c100_c200"),
+    {ok,"many_c100_c200"}=db_cluster_deployment:read(dir,"many_c100_c200"),
+    {ok,2}=db_cluster_deployment:read(num_controllers,"many_c100_c200"),
+    {ok,["c100","c200"]}=db_cluster_deployment:read(controller_hosts,"many_c100_c200"),
+    {ok,6}=db_cluster_deployment:read(num_workers,"many_c100_c200"),
+    {ok,["c100","c200"]}=db_cluster_deployment:read( worker_hosts,"many_c100_c200"),
   
+
+    {ok,1}=db_cluster_deployment:read(num_controllers,"single_c100"),
 
     {error,[eexist,"glurk",db_cluster_deployment,_]}=db_cluster_deployment:read(cluster_name,"glurk"),
     {error,['Key eexists',glurk,"single_c100",db_cluster_deployment,_]}=db_cluster_deployment:read(glurk,"single_c100"),
  
+    {"single_c100","cookie_single_c100","single_c100",1,["c100"],6,["c100"]}=db_cluster_deployment:read("single_c100"),
+    
     
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),

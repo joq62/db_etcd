@@ -1,1 +1,2 @@
 * cluster_deployment : cluster_name->cluster_spec!
+*host spec hostname as id -> host_spec
