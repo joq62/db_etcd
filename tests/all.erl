@@ -74,7 +74,7 @@ setup()->
     
     {ok,_}=db_etcd_server:start(),
     pong=db_etcd:ping(),
-    
+    timer:sleep(5000),
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok.

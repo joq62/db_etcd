@@ -66,7 +66,6 @@ init([]) ->
     IntialNode=node(),
     lib_db_etcd:dynamic_install_start(IntialNode),
     
- 
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
   
     
@@ -85,15 +84,19 @@ init([]) ->
 %% --------------------------------------------------------------------
 
 handle_call({install},_From, State) ->
+
+  %  io:format("DEBUG  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok=db_appl_spec:create_table(),
+    ApplSpec=db_appl_spec:git_clone_load(),
+    Ok_ApplSpec=[X||{ok,X}<-ApplSpec],
+    Err_ApplSpec=[X||{error,X}<-ApplSpec],
+
+
     ok=db_appl_deployment:create_table(),
     AppDeployment=db_appl_deployment:git_clone_load(),
     Ok_ApplDeploment=[X||{ok,X}<-AppDeployment],
     Err_ApplDeploment=[X||{error,X}<-AppDeployment],
     
-    ok=db_appl_spec:create_table(),
-    ApplSpec=db_appl_spec:git_clone_load(),
-    Ok_ApplSpec=[X||{ok,X}<-ApplSpec],
-    Err_ApplSpec=[X||{error,X}<-ApplSpec],
 
     ok=db_cluster_deployment:create_table(),
     ClusterDeployment=db_cluster_deployment:git_clone_load(),
@@ -146,7 +149,7 @@ handle_cast(Msg, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 handle_info(timeout, State) ->
-    rpc:cast(node(),db_etcd,install,[]),
+    spawn(fun()->db_etcd:install() end),
     {noreply, State};
 
    
