@@ -100,6 +100,11 @@ handle_call({install},_From, State) ->
     Ok_ClusterDeployment=[X||{ok,X}<-ClusterDeployment],
     Err_ClusterDeployment=[X||{error,X}<-ClusterDeployment],
 
+    ok=db_cluster_application_deployment:create_table(),
+    ClusterApplDeployment=db_cluster_application_deployment:git_clone_load(),
+    Ok_ClusterApplDeployment=[X||{ok,X}<-ClusterApplDeployment],
+    Err_ClusterApplDeployment=[X||{error,X}<-ClusterApplDeployment],
+
     ok=db_host_spec:create_table(),
     HostSpec=db_host_spec:git_clone_load(),
     Ok_HostSpec=[X||{ok,X}<-HostSpec],
@@ -108,6 +113,7 @@ handle_call({install},_From, State) ->
     Reply=[{appl_deployment,Ok_ApplDeploment,Err_ApplDeploment},
 	   {appl_spec,Ok_ApplSpec,Err_ApplSpec},
 	   {cluster_deployment,Ok_ClusterDeployment,Err_ClusterDeployment},
+	   {cluster_application_deployment,Ok_ClusterApplDeployment,Err_ClusterApplDeployment},
 	   {host_spec,Ok_HostSpec,Err_HostSpec}],
 
     {reply, Reply, State};
