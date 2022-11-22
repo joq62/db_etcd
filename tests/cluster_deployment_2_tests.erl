@@ -52,9 +52,9 @@ read_specs_test()->
     {ok,"cookie_many_c100_c200"}=db_cluster_deployment:read(cookie,"many_c100_c200"),
     {ok,"many_c100_c200"}=db_cluster_deployment:read(dir,"many_c100_c200"),
     {ok,2}=db_cluster_deployment:read(num_controllers,"many_c100_c200"),
-    {ok,["c100","c200"]}=db_cluster_deployment:read(controller_hosts,"many_c100_c200"),
+    {ok,["c100","c200"]}=db_cluster_deployment:read(controller_host_specs,"many_c100_c200"),
     {ok,6}=db_cluster_deployment:read(num_workers,"many_c100_c200"),
-    {ok,["c100","c200"]}=db_cluster_deployment:read( worker_hosts,"many_c100_c200"),
+    {ok,["c100","c200"]}=db_cluster_deployment:read( worker_host_specs,"many_c100_c200"),
   
 
     {ok,1}=db_cluster_deployment:read(num_controllers,"single_c100"),

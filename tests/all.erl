@@ -39,6 +39,8 @@ start()->
     ok=cluster_state_tests:start(),
 
     ok=host_spec_2_tests:start(),
+
+ %   ok=appl_do_deploy_2_tests:start(),
     
    
    

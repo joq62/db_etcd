@@ -27,10 +27,10 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(SpecId,ApplName,Vsn,NumInstances,Affinity)->
+create(SpecId,ApplSpec,Vsn,NumInstances,Affinity)->
     Record=#?RECORD{
 		    spec_id=SpecId,
-		    appl_name=ApplName,
+		    appl_spec=ApplSpec,
 		    vsn=Vsn,
 		    num_instances=NumInstances,
 		    affinity=Affinity
@@ -53,10 +53,10 @@ read(Key,SpecId)->
     Return=case read(SpecId) of
 	       []->
 		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,ApplName,Vsn,NumInstances,Affinity} ->
+	       {_SpecId,ApplSpec,Vsn,NumInstances,Affinity} ->
 		   case  Key of
-		        appl_name->
-			   {ok,ApplName};
+		        appl_spec->
+			   {ok,ApplSpec};
 		       vsn->
 			   {ok,Vsn};
 		       num_instances->
@@ -72,11 +72,11 @@ read(Key,SpecId)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_ApplName,_Vsn,_NumInstances,_Affinity}<-Z].
+    [SpecId||{?RECORD,SpecId,_ApplSpec,_Vsn,_NumInstances,_Affinity}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,ApplName,Vsn,NumInstances,Affinity}||{?RECORD,SpecId,ApplName,Vsn,NumInstances,Affinity}<-Z].
+    [{SpecId,ApplSpec,Vsn,NumInstances,Affinity}||{?RECORD,SpecId,ApplSpec,Vsn,NumInstances,Affinity}<-Z].
 
 read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -85,7 +85,7 @@ read(Object)->
 	       []->
 		  [];
 	       _->
-		   [Info]=[{SpecId,ApplName,Vsn,NumInstances,Affinity}||{?RECORD,SpecId,ApplName,Vsn,NumInstances,Affinity}<-Z],
+		   [Info]=[{SpecId,ApplSpec,Vsn,NumInstances,Affinity}||{?RECORD,SpecId,ApplSpec,Vsn,NumInstances,Affinity}<-Z],
 		   Info
 	   end,
     Result.
@@ -157,11 +157,11 @@ from_file([FileName|T],Dir,Acc)->
 	       {error,Reason}->
 		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
 	       {ok,[{appl_deployment,SpecId,Info}]}->
-		   {appl_name,ApplName}=lists:keyfind(appl_name,1,Info),
+		   {appl_spec,ApplSpec}=lists:keyfind(appl_spec,1,Info),
 		   {vsn,Vsn}=lists:keyfind(vsn,1,Info),
 		   {num_instances,NumInstances}=lists:keyfind(num_instances,1,Info),
 		   {affinity,Affinity}=lists:keyfind(affinity,1,Info),
-		   case create(SpecId,ApplName,Vsn,NumInstances,Affinity) of
+		   case create(SpecId,ApplSpec,Vsn,NumInstances,Affinity) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->

@@ -27,15 +27,15 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts)->
+create(SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs)->
     Record=#?RECORD{
 		    spec_id=SpecId,
 		    cookie=Cookie,
 		    dir=ClusterDir,
 		    num_controllers=NumControllers,
-		    controller_hosts=ControllerHosts,
+		    controller_host_specs=ControllerHostSpecs,
 		    num_workers=NumWorkers,
-		    worker_hosts=WorkerHosts
+		    worker_host_specs=WorkerHostSpecs
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -55,7 +55,7 @@ read(Key,SpecId)->
     Return=case read(SpecId) of
 	       []->
 		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts} ->
+	       {_SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs} ->
 		   case  Key of
 		      cookie->
 			   {ok,Cookie};
@@ -63,12 +63,12 @@ read(Key,SpecId)->
 			   {ok,ClusterDir};
 		       num_controllers->
 			   {ok,NumControllers};
-		       controller_hosts->
-			   {ok,ControllerHosts};
+		       controller_host_specs->
+			   {ok,ControllerHostSpecs};
 		       num_workers->
 			   {ok,NumWorkers};
-		       worker_hosts->
-			   {ok,WorkerHosts};
+		       worker_host_specs->
+			   {ok,WorkerHostSpecs};
 		       Err ->
 			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
@@ -78,11 +78,11 @@ read(Key,SpecId)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_Cookie,_ClusterDir,_NumControllers,_ControllerHosts,_NumWorkers,_WorkerHosts}<-Z].
+    [SpecId||{?RECORD,SpecId,_Cookie,_ClusterDir,_NumControllers,_ControllerHostSpecs,_NumWorkers,_WorkerHostSpecs}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts}||{?RECORD,SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts}<-Z].
+    [{SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}||{?RECORD,SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}<-Z].
 
 read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -91,7 +91,7 @@ read(Object)->
 	       []->
 		  [];
 	       _->
-		   [Info]=[{SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts}||{?RECORD,SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts}<-Z],
+		   [Info]=[{SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}||{?RECORD,SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}<-Z],
 		   Info
 	   end,
     Result.
@@ -166,10 +166,10 @@ from_file([FileName|T],Dir,Acc)->
 		   {cookie,Cookie}=lists:keyfind(cookie,1,Info),
 		   {dir,ClusterDir}=lists:keyfind(dir,1,Info),
 		   {num_controllers,NumControllers}=lists:keyfind(num_controllers,1,Info),
-		   {controller_hosts,ControllerHosts}=lists:keyfind(controller_hosts,1,Info),
+		   {controller_host_specs,ControllerHostSpecs}=lists:keyfind(controller_host_specs,1,Info),
 		   {num_workers,NumWorkers}=lists:keyfind(num_workers,1,Info),
-		   {worker_hosts,WorkerHosts}=lists:keyfind(worker_hosts,1,Info),
-		   case create(SpecId,Cookie,ClusterDir,NumControllers,ControllerHosts,NumWorkers,WorkerHosts) of
+		   {worker_host_specs,WorkerHostSpecs}=lists:keyfind(worker_host_specs,1,Info),
+		   case create(SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->

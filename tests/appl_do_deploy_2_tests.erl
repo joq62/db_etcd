@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(appl_deployment_2_tests).      
+-module(appl_do_deploy_2_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -45,7 +45,7 @@ read_specs_test()->
     
     {"math","math","0.1.0",2,[]}=db_appl_deployment:read("math"),
     
-    {ok,"math"}=db_appl_deployment:read(appl_spec,"math"),
+    {ok,"math"}=db_appl_deployment:read(appl_name,"math"),
     {ok,"0.1.0"}=db_appl_deployment:read(vsn,"math"),
     {ok,2}=db_appl_deployment:read(num_instances,"math"),
     {ok,[]}=db_appl_deployment:read(affinity,"math"),

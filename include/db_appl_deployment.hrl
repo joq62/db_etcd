@@ -5,7 +5,7 @@
 -define(RECORD,?TABLE).
 -record(?RECORD,{
 		 spec_id,
-		 appl_name,
+		 appl_spec,
 		 vsn,
 		 num_instances,
 		 affinity

@@ -8,7 +8,7 @@
 		 cookie,
 		 dir,
 		 num_controllers,
-		 controller_hosts,
+		 controller_host_specs,
 		 num_workers,
-		 worker_hosts
+		 worker_host_specs
 		}).
