@@ -31,8 +31,7 @@ start()->
 
     ok=appl_spec_2_tests:start(),
     ok=appl_deployment_2_tests:start(),
-    ok=appl_state_tests:start(),
-
+ 
     ok=cluster_application_deployment_2_tests:start(),
 
     ok=cluster_deployment_2_tests:start(),
@@ -40,7 +39,7 @@ start()->
 
     ok=host_spec_2_tests:start(),
 
- %   ok=appl_do_deploy_2_tests:start(),
+    ok=pod_info_tests:start(),
     
    
    

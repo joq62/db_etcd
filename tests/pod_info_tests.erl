@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(appl_state_tests).      
+-module(pod_info_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -27,8 +27,7 @@ start()->
 
     ok=setup(),
     ok=init_state(),
-    ok=update_test(),
-  
+     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok.
@@ -42,37 +41,61 @@ start()->
 %% --------------------------------------------------------------------
 init_state()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
 
     DeplId1=depl_id_1,
-    ApplName1="appl_1",
-    PodsInfo1={node1,pod_dir_1,host1},
-    DeployInfo1={date1,time1},
-    {atomic,ok}=db_appl_state:create(DeplId1,ApplName1,PodsInfo1,DeployInfo1),
+    ApplDeployId1="math",
+    Status1=candidate,
+    PodName1=pod_name1,
+    PodNode1=pod_node1,
+    PodDir1=pod_dir1,
+    ClusterApplDeplId1="a",
+    ClusterDeplyomentId1="many_c100_c200",
+    HostSpecId1="c100",
+    ApplSpecId1="math",
+    {atomic,ok}=db_pod_info:create(DeplId1,ApplDeployId1,Status1,
+				   PodName1,PodNode1,PodDir1,
+				   ClusterApplDeplId1,ClusterDeplyomentId1,
+				   HostSpecId1,ApplSpecId1),
     
-    {depl_id_1,
-     "appl_1",
-     [{node1,pod_dir_1,host1}],
-     [{date1,time1}]
-    }=db_appl_state:read(DeplId1),
-
     DeplId2=depl_id_2,
-    ApplName2="appl_2",
-    PodsInfo2={node2,pod_dir_2,host2},
-    DeployInfo2={date2,time2},
-    {atomic,ok}=db_appl_state:create(DeplId2,ApplName2,PodsInfo2,DeployInfo2),
+    ApplDeployId2="math",
+    Status2=candidate,
+    PodName2=pod_name2,
+    PodNode2=pod_node2,
+    PodDir2=pod_dir2,
+    ClusterApplDeplId2="a",
+    ClusterDeplyomentId2="many_c100_c200",
+    HostSpecId2="c200",
+    ApplSpecId2="ops_node",
+    {atomic,ok}=db_pod_info:create(DeplId2,ApplDeployId2,Status2,
+				   PodName2,PodNode2,PodDir2,
+				   ClusterApplDeplId2,ClusterDeplyomentId2,
+				   HostSpecId2,ApplSpecId2),
     
-    {
-     depl_id_2,
-     "appl_2",
-     [{node2,pod_dir_2,host2}],
-     [{date2,time2}]
-    }=db_appl_state:read(DeplId2),
+    {depl_id_1,"math",candidate,pod_name1,pod_node1,pod_dir1,
+     "a","many_c100_c200","c100","math"
+    }=db_pod_info:read(DeplId1),
     
-    {ok,"appl_2"}=db_appl_state:read(appl_name,DeplId2),
-    {ok,[{node2,pod_dir_2,host2}]}=db_appl_state:read(pods,DeplId2),
-    {ok,[{date2,time2}]}=db_appl_state:read(deployment_info,DeplId2),
+    {depl_id_2,"math",candidate,pod_name2,pod_node2,pod_dir2,
+     "a","many_c100_c200","c200","ops_node"
+    }=db_pod_info:read(DeplId2),
+    
+    {ok, pod_name1}=db_pod_info:read(pod_name,DeplId1),
+    {ok, pod_name2}=db_pod_info:read(pod_name,DeplId2),
+    
+    {ok,candidate}=db_pod_info:read(status,DeplId1),
+    {ok,candidate}=db_pod_info:read(status,DeplId2),
+
+    {atomic,ok}=db_pod_info:add_info(status,deployed,DeplId1),
+    {atomic,ok}=db_pod_info:add_info(status,deployed,DeplId2),
+
+    {ok,deployed}=db_pod_info:read(status,DeplId1),
+    {ok,deployed}=db_pod_info:read(status,DeplId2),
+
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
     ok.
 
 %% --------------------------------------------------------------------
@@ -80,34 +103,6 @@ init_state()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-update_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-  
-    Key1=pods,  
-    [DepId1|_]=lists:sort(db_appl_state:get_all_id()),
-    depl_id_1=DepId1,
-    {ok,PodsInfo1}=db_appl_state:read(Key1,DepId1),
-
-    % add
-  
-    Info1={node11,pod_dir_11,host11},
-    
-    {atomic,ok}=db_appl_state:add_info(Key1,Info1,DepId1),
-    {ok,PodsInfo2}=db_appl_state:read(Key1,DepId1),
-    
-    [{node1,pod_dir_1,host1},
-     {node11,pod_dir_11,host11}
-    ]=lists:sort(PodsInfo2),
-    
-    {atomic,ok}=db_appl_state:delete_info(Key1,glurk,DepId1),
-    {ok,PodsInfo2}=db_appl_state:read(Key1,DepId1),
-
-    {atomic,ok}=db_appl_state:delete_info(Key1,Info1,DepId1),
-    {ok,PodsInfo1}=db_appl_state:read(Key1,DepId1),
-
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -126,7 +121,7 @@ setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
        
     pong=db_etcd:ping(),
-    ok=db_appl_state:create_table(),
+    ok=db_pod_info:create_table(),
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
