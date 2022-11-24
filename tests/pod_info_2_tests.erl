@@ -93,6 +93,23 @@ init_state()->
     {ok,deployed}=db_pod_info:read(status,DeplId1),
     {ok,deployed}=db_pod_info:read(status,DeplId2),
 
+
+  DeplId1=depl_id_1,
+    ApplDeployId11="math",
+    Status11=candidate,
+    PodName11=pod_name11,
+    PodNode11=pod_node11,
+    PodDir11=pod_dir11,
+    ClusterApplDeplId11="a",
+    ClusterDeplyomentId11="many_c100_c200",
+    HostSpecId11="c100",
+    ApplSpecId11="math",
+    {atomic,ok}=db_pod_info:create(DeplId1,ApplDeployId11,Status11,
+				   PodName11,PodNode11,PodDir11,
+				   ClusterApplDeplId11,ClusterDeplyomentId11,
+				   HostSpecId11,ApplSpecId11),
+    kuk=db_pod_info:read(DeplId1),
+    
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     

@@ -7,7 +7,7 @@
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
-				 ]),
+				]),
     mnesia:wait_for_tables([?TABLE], 20000).
 
 create_table(NodeList,StorageType)->
@@ -27,23 +27,12 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(DeplId,ApplDeployId,Status,
-       PodName,PodNode,PodDir,
-       ClusterApplicationDeploymentId,ClusterSpecId,
-       HostSpecId,
-       ApplSpecId)->
- 
+create(DeplId,ClusterApplicationDeploymentId,Status,PodApplInfo)->
     Record=#?RECORD{
 		    deploy_id=DeplId,
-		    appl_deployment_id=ApplDeployId,
-		    status=Status,
-		    pod_name=PodName,
-		    pod_node=PodNode,
-		    pod_dir=PodDir,
 		    cluster_application_deployment_id=ClusterApplicationDeploymentId,
-		    cluster_deployment_id=ClusterSpecId,
-		    host_spec_id=HostSpecId,
-		    appl_spec_id=ApplSpecId
+		    status=Status,
+		    pod_appl_info=PodApplInfo
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -64,23 +53,23 @@ read(Key,DeplId)->
     Return=case read(DeplId) of
 	       []->
 		   {error,[eexist,DeplId,?MODULE,?LINE]};
-	       {_DeplId,ApplDeployId,Status,
-		PodName,PodNode,PodDir,
-		ClusterApplicationDeploymentId,ClusterSpecId,
-		HostSpecId,ApplSpecId} ->
+	       {_DeplId,ClusterApplicationDeploymentId,Status,PodApplInfo} ->
 		   case  Key of
 		       appl_deployment_id->
 			   {ok,ApplDeployId};
+		       cluster_application_deployment_id->
+			   {ok,ClusterApplicationDeploymentId};		     
 		       status->
 			   {ok,Status};
+		       pod_appl_info->
+			   {ok,PodApplInfo};
 		       pod_name->
 			   {ok,PodName};
 		       pod_node->
 			   {ok,PodNode};
 		       pod_dir->
 			   {ok,PodDir};
-		       cluster_application_deployment_id->
-			   {ok,ClusterApplicationDeploymentId};
+		     
 		       cluster_deployment_id->
 			   {ok,ClusterSpecId};
 		       host_spec_id->

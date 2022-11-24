@@ -58,6 +58,8 @@ init_state()->
 				   ClusterApplDeplId1,ClusterDeplyomentId1,
 				   HostSpecId1,ApplSpecId1),
     
+    
+
     DeplId2=depl_id_2,
     ApplDeployId2="math",
     Status2=candidate,
@@ -92,6 +94,8 @@ init_state()->
 
     {ok,deployed}=db_pod_info:read(status,DeplId1),
     {ok,deployed}=db_pod_info:read(status,DeplId2),
+
+  
 
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
