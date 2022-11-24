@@ -39,7 +39,7 @@ start()->
 
     ok=host_spec_2_tests:start(),
 
-    ok=pod_info_tests:start(),
+    ok=pod_info_2_tests:start(),
     
    
    

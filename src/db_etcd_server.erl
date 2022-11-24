@@ -113,6 +113,8 @@ handle_call({install},_From, State) ->
     Ok_HostSpec=[X||{ok,X}<-HostSpec],
     Err_HostSpec=[X||{error,X}<-HostSpec],
 
+    ok=db_pod_info:create_table(),
+
     Reply=[{appl_deployment,Ok_ApplDeploment,Err_ApplDeploment},
 	   {appl_spec,Ok_ApplSpec,Err_ApplSpec},
 	   {cluster_deployment,Ok_ClusterDeployment,Err_ClusterDeployment},
