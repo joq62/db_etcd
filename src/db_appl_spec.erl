@@ -27,13 +27,15 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(SpecId,ApplName,Vsn,App,GitPath)->
+create(SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType)->
     Record=#?RECORD{
 		    spec_id=SpecId,
 		    appl_name=ApplName,
 		    vsn=Vsn,
 		    app=App,
-		    gitpath=GitPath
+		    gitpath=GitPath,
+		    local_resource_type=LocalType,
+		    target_resource_type=TargetType
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -53,7 +55,7 @@ read(Key,SpecId)->
     Return=case read(SpecId) of
 	       []->
 		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,ApplName,Vsn,App,GitPath} ->
+	       {_SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType} ->
 		   case  Key of
 		        appl_name->
 			   {ok,ApplName};
@@ -63,6 +65,10 @@ read(Key,SpecId)->
 			   {ok,App};
 		       gitpath->
 			   {ok,GitPath};
+		       local_type->
+			   {ok,LocalType};
+		       target_type->
+			   {ok,TargetType};
 		       Err ->
 			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
@@ -76,7 +82,7 @@ get_all_id()->
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,ApplName,Vsn,App,GitPath}||{?RECORD,SpecId,ApplName,Vsn,App,GitPath}<-Z].
+    [{SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType}||{?RECORD,SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType}<-Z].
 
 read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -85,7 +91,7 @@ read(Object)->
 	       []->
 		  [];
 	       _->
-		   [Info]=[{SpecId,ApplName,Vsn,App,GitPath}||{?RECORD,SpecId,ApplName,Vsn,App,GitPath}<-Z],
+		   [Info]=[{SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType}||{?RECORD,SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType}<-Z],
 		   Info
 	   end,
     Result.
@@ -161,7 +167,9 @@ from_file([FileName|T],Dir,Acc)->
 		   {vsn,Vsn}=lists:keyfind(vsn,1,Info),
 		   {app,App}=lists:keyfind(app,1,Info),
 		   {gitpath,GitPath}=lists:keyfind(gitpath,1,Info),
-		   case create(SpecId,ApplName,Vsn,App,GitPath) of
+		   {local_resource_type,LocalType}=lists:keyfind(local_resource_type,1,Info),
+		   {target_resource_type,TargetType}=lists:keyfind(target_resource_type,1,Info),
+		   case create(SpecId,ApplName,Vsn,App,GitPath,LocalType,TargetType) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->

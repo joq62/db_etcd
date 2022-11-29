@@ -8,5 +8,7 @@
 		 appl_name,
 		 vsn,
 		 app,
-		 gitpath
+		 gitpath,
+		 local_resource_type,
+		 target_resource_type
 		}).
