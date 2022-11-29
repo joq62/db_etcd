@@ -40,19 +40,20 @@ start()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["db_etcd"|_]=lists:sort(db_appl_spec:get_all_id()),
+    true=lists:member("db_etcd",lists:sort(db_appl_spec:get_all_id())),
     
-    {"math",
-     "math",
-     "0.1.0",
-     math,
-     "https://github.com/joq62/math.git"
+    {"math","math","0.1.0",math,
+     "https://github.com/joq62/math.git",
+     [math],
+     [glurk]
     }=db_appl_spec:read("math"),
     
     {ok,"math"}=db_appl_spec:read(appl_name,"math"),
     {ok,"0.1.0"}=db_appl_spec:read(vsn,"math"),
     {ok,math}=db_appl_spec:read(app,"math"),
     {ok,"https://github.com/joq62/math.git"}=db_appl_spec:read(gitpath,"math"),
+    {ok,[math]}=db_appl_spec:read(local_type,"math"),
+    {ok,[glurk]}=db_appl_spec:read(target_type,"math"),
     {error,['Key eexists',glurk,"math",db_appl_spec,_]}=db_appl_spec:read(glurk,"math"),
     {error,[eexist,"glurk",db_appl_spec,_]}=db_appl_spec:read( vsn,"glurk"),
 
@@ -60,7 +61,9 @@ read_specs_test()->
      "db_etcd_app",
      "0.1.0",
      db_etcd_app,
-     "https://github.com/joq62/db_etcd_app.git"
+     "https://github.com/joq62/db_etcd_app.git",
+     [db_etcd_app],
+     [nodelog]
     }=db_appl_spec:read("db_etcd"),
     
     

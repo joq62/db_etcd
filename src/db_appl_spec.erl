@@ -78,7 +78,7 @@ read(Key,SpecId)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_ApplName,_Vsn,_App,_GitPath}<-Z].
+    [SpecId||{?RECORD,SpecId,_ApplName,_Vsn,_App,_GitPath,_LocalType,_TargetType}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),

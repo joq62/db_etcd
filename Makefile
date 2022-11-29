@@ -56,7 +56,7 @@ eunit:
 #	mkdir host_specs;
 #	cp ../../host_specs/* host_specs;
 #  	dependencies
-	erlc -I include -o tests_ebin ../../infra_services/common/src/*.erl;
+	erlc -I include -o tests_ebin ../common/src/*.erl;
 #	application
 	mkdir ebin;
 	erlc -I include -o ebin src/*.erl;	
