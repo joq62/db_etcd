@@ -1,0 +1,126 @@
+-module(db_cluster_instance).
+-import(lists, [foreach/2]).
+-compile(export_all).
+
+-include_lib("stdlib/include/qlc.hrl").
+-include("db_cluster_instance.hrl").
+
+create_table()->
+    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
+				 {type,bag}
+				]),
+    mnesia:wait_for_tables([?TABLE], 20000).
+
+create_table(NodeList,StorageType)->
+    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
+				 {StorageType,NodeList}]),
+    mnesia:wait_for_tables([?TABLE], 20000).
+
+add_node(Node,StorageType)->
+    Result=case mnesia:change_config(extra_db_nodes, [Node]) of
+	       {ok,[Node]}->
+		   mnesia:add_table_copy(schema, node(),StorageType),
+		   mnesia:add_table_copy(?TABLE, node(), StorageType),
+		   Tables=mnesia:system_info(tables),
+		   mnesia:wait_for_tables(Tables,20*1000);
+	       Reason ->
+		   Reason
+	   end,
+    Result.
+
+create(InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status)->
+    Record=#?RECORD{
+		    instance_id=InstanceId,
+		    cluster_spec=ClusterSpec,
+		    pod_name=PodName,
+		    pod_node=PodNode,
+		    pod_dir=PodDir,
+		    host_spec=HostSpec,
+		    status=Status
+
+		   },
+    F = fun() -> mnesia:write(Record) end,
+    mnesia:transaction(F).
+
+member(InstanceId)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.instance_id==InstanceId])),
+    Member=case Z of
+	       []->
+		   false;
+	       _->
+		   true
+	   end,
+    Member.
+
+
+
+read(Key,InstanceId,Key1,Value1)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.instance_id==Object])),
+    Return=case read(InstanceId) of
+	       []->
+		   {error,[eexist,InstanceId,?MODULE,?LINE]};
+	       
+	       
+	       {_InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status} ->
+		   case  Key of
+		       cluster_spec->
+			   {ok,ClusterSpec};
+		       instance_id->
+			   {ok,InstanceId};
+		       pod_name->
+			   {ok,PodName};
+		       pod_node->
+			   {ok,PodNode};
+		       pod_dir->
+			   {ok,PodDir};
+		       host_spec->
+			   {ok,HostSpec};
+		       status->
+			   {ok,Status};
+		       Err ->
+			   {error,['Key eexists',Err,InstanceId,?MODULE,?LINE]}
+		   end
+	   end,
+    Return.
+
+
+get_all_id()->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    [InstanceId||{?RECORD,InstanceId,_ClusterSpec,_PodName,_PodNode,_PodDir,_HostSpec,_Status}<-Z].
+    
+read_all() ->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    [{InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}||{?RECORD,InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}<-Z].
+
+read(Object)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.instance_id==Object])),
+    Result=case Z of
+	       []->
+		   [];
+	       Z->
+		   [{InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}||{?RECORD,InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}<-Z]
+	   end,
+    Result.
+
+delete(Object) ->
+    F = fun() -> 
+		mnesia:delete({?TABLE,Object})
+		    
+	end,
+    mnesia:transaction(F).
+
+
+do(Q) ->
+    F = fun() -> qlc:e(Q) end,
+    Result=case mnesia:transaction(F) of
+	       {atomic, Val} ->
+		   Val;
+	       {error,Reason}->
+		   {error,Reason}
+	   end,
+    Result.
+
+%%-------------------------------------------------------------------------

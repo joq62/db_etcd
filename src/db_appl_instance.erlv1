@@ -1,9 +1,9 @@
--module(db_appl_deployment).
+-module(db_appl_instance).
 -import(lists, [foreach/2]).
 -compile(export_all).
 
 -include_lib("stdlib/include/qlc.hrl").
--include("db_appl_deployment.hrl").
+-include("db_appl_instance.hrl").
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
@@ -112,66 +112,3 @@ do(Q) ->
     Result.
 
 %%-------------------------------------------------------------------------
-git_clone_load()->
-    ok=create_table(),
-    Result=case git_clone() of
-	       {error,Reason}->
-		   {error,Reason};
-	       {ok,TempDirName,SpecDir}->
-		   case from_file(SpecDir) of
-		       {error,Reason}->
-			   os:cmd("rm -rf "++TempDirName),	
-			   {error,Reason};
-		       LoadResult->
-			   os:cmd("rm -rf "++TempDirName),	
-			   LoadResult
-		   end
-	   end,
-    Result.
-
-git_clone()->
-    TempDirName=erlang:integer_to_list(os:system_time(microsecond),36)++".dir",
-    ok=file:make_dir(TempDirName),
-    GitDir=filename:join(TempDirName,?ApplDeploymentDir),
-    GitPath=?GitPathApplDeployments,
-    os:cmd("rm -rf "++GitDir),    
-    ok=file:make_dir(GitDir),
-    GitResult=appl:git_clone_to_dir(node(),GitPath,GitDir),
-    Result=case filelib:is_dir(GitDir) of
-	       false->
-		   {error,[failed_to_clone,GitPath,GitResult]};
-	       true->
-		   {ok,TempDirName,GitDir}
-	   end,
-    Result.	
-
-from_file()->
-    from_file(?ApplDeploymentDir).
-
-from_file(Dir)->
-    {ok,FileNames}=file:list_dir(Dir),
-    from_file(FileNames,Dir,[]).
-
-from_file([],_,Acc)->
-    Acc;		     
-from_file([FileName|T],Dir,Acc)->
-    FullFileName=filename:join(Dir,FileName),
-    NewAcc=case file:consult(FullFileName) of
-	       {error,Reason}->
-		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{appl_deployment,SpecId,Info}]}->
-		   {cluster_deployment,ClusterDeployment}=lists:keyfind(cluster_deployment,1,Info),
-		   {appl_spec,ApplSpec}=lists:keyfind(appl_spec,1,Info),
-		   {vsn,Vsn}=lists:keyfind(vsn,1,Info),
-		   {num_instances,NumInstances}=lists:keyfind(num_instances,1,Info),
-		   {affinity,Affinity}=lists:keyfind(affinity,1,Info),
-		   case create(SpecId,ClusterDeployment,ApplSpec,Vsn,NumInstances,Affinity) of
-		       {atomic,ok}->
-			   [{ok,FileName}|Acc];
-		       {error,Reason}->
-			   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc]
-		   end;
-	       {ok,NotAnApplSpecFile} -> 
-		   [{error,[not_appl_spec_file,NotAnApplSpecFile,FileName,Dir,?MODULE,?LINE]}|Acc]
-	   end,
-    from_file(T,Dir,NewAcc).

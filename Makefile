@@ -45,16 +45,6 @@ eunit:
 #	tests 
 	mkdir tests_ebin;
 	erlc -I include -o tests_ebin tests/*.erl;
-#	mkdir application_deployments;
-#	cp ../../application_deployments/* application_deployments;
-#	mkdir application_specs;
-#	cp ../../application_specs/* application_specs;
-#	mkdir cluster_deployments;
-#	cp ../../cluster_deployments/* cluster_deployments;
-#	mkdir cluster_specs;
-#	cp ../../cluster_specs/* cluster_specs;
-#	mkdir host_specs;
-#	cp ../../host_specs/* host_specs;
 #  	dependencies
 	erlc -I include -o tests_ebin ../common/src/*.erl;
 #	application

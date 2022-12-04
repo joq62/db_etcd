@@ -5,6 +5,10 @@
 -define(RECORD,?TABLE).
 -record(?RECORD,{
 		 spec_id,
-		 cluster_name,
-		 cookie
+		 cookie,
+		 dir,
+		 num_controllers,
+		 controller_host_specs,
+		 num_workers,
+		 worker_host_specs
 		}).
