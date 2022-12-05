@@ -28,10 +28,11 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status)->
+create(InstanceId,ClusterSpec,ConnectNode,PodName,PodNode,PodDir,HostSpec,Status)->
     Record=#?RECORD{
 		    instance_id=InstanceId,
 		    cluster_spec=ClusterSpec,
+		    connect_node=ConnectNode,
 		    pod_name=PodName,
 		    pod_node=PodNode,
 		    pod_dir=PodDir,
@@ -55,30 +56,31 @@ member(InstanceId)->
 
 
 
-read(Key,InstanceId,Key1,Value1)->
+read(Key,InstanceId,PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.instance_id==Object])),
-    Return=case read(InstanceId) of
+		     X#?RECORD.instance_id==InstanceId,
+		     X#?RECORD.pod_node==PodNode])),
+    Return=case Z of
 	       []->
-		   {error,[eexist,InstanceId,?MODULE,?LINE]};
-	       
-	       
-	       {_InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status} ->
+		   [];
+	       [X]->
 		   case  Key of
 		       cluster_spec->
-			   {ok,ClusterSpec};
+			   {ok,X#?RECORD.cluster_spec};
+		       connect_node->
+			  {ok,X#?RECORD.connect_node};
 		       instance_id->
-			   {ok,InstanceId};
+			   {ok,X#?RECORD.instance_id};
 		       pod_name->
-			   {ok,PodName};
+			   {ok,X#?RECORD.pod_name};
 		       pod_node->
-			   {ok,PodNode};
+			    {ok,X#?RECORD.pod_node};
 		       pod_dir->
-			   {ok,PodDir};
+			    {ok,X#?RECORD.pod_dir};
 		       host_spec->
-			   {ok,HostSpec};
+			    {ok,X#?RECORD.host_spec};
 		       status->
-			   {ok,Status};
+			   {ok,X#?RECORD.status};
 		       Err ->
 			   {error,['Key eexists',Err,InstanceId,?MODULE,?LINE]}
 		   end
@@ -88,20 +90,32 @@ read(Key,InstanceId,Key1,Value1)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [InstanceId||{?RECORD,InstanceId,_ClusterSpec,_PodName,_PodNode,_PodDir,_HostSpec,_Status}<-Z].
+    [InstanceId||{?RECORD,InstanceId,_ClusterSpec,_ConnectNode,_PodName,_PodNode,_PodDir,_HostSpec,_Status}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}||{?RECORD,InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}<-Z].
+    Result=[{X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.connect_node,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
+  %  [{InstanceId,ClusterSpec,ConnectNode,PodName,PodNode,PodDir,HostSpec,Status}||{?RECORD,InstanceId,ClusterSpec,ConnectNode,PodName,PodNode,PodDir,HostSpec,Status}<-Z].
+    Result.
 
-read(Object)->
+read(InstanceId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.instance_id==Object])),
+		     X#?RECORD.instance_id==InstanceId])),
+    [{X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.connect_node,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
+    
+
+
+read(InstanceId,PodNode)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.instance_id==InstanceId,
+		     X#?RECORD.pod_node==PodNode])),
+    
+   
     Result=case Z of
 	       []->
 		   [];
-	       Z->
-		   [{InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}||{?RECORD,InstanceId,ClusterSpec,PodName,PodNode,PodDir,HostSpec,Status}<-Z]
+	       [X]->
+		   {X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.connect_node,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}
 	   end,
     Result.
 

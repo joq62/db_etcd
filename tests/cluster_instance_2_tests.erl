@@ -47,6 +47,7 @@ create_instance_test()->
     
 
     ClusterSpec="c200_c201",
+    ConnectNode_1=cn1,
  %   InstanceId=erlang:integer_to_list(os:system_time(microsecond),36),
     InstanceId=instance_id_1,
     PodName1=pod_name_1,
@@ -55,44 +56,39 @@ create_instance_test()->
     HostSpec1="c200",
     Status1=candidate,
 
-    {atomic,ok}=db_cluster_instance:create(InstanceId,ClusterSpec,PodName1,PodNode1,PodDir1,HostSpec1,Status1),
+    {atomic,ok}=db_cluster_instance:create(InstanceId,ClusterSpec,ConnectNode_1,PodName1,PodNode1,PodDir1,HostSpec1,Status1),
     
-    [
-     {instance_id_1,"c200_c201",
-      pod_name_1,pod_node_1,pod_dir_1,
-      "c200",
-      candidate
-     }
-    ]=db_cluster_instance:read(InstanceId),
-     
+    [{instance_id_1,"c200_c201",cn1,pod_name_1,pod_node_1,pod_dir_1,"c200",candidate}]=db_cluster_instance:read(InstanceId),
+ 
+    ConnectNode_2=cn2,
     PodName2=pod_name_2,
     PodNode2=pod_node_2,
     PodDir2=pod_dir_2,
     HostSpec2="c201",
     Status2=deployed,
 
-    {atomic,ok}=db_cluster_instance:create(InstanceId,ClusterSpec,PodName2,PodNode2,PodDir2,HostSpec2,Status2),
+    {atomic,ok}=db_cluster_instance:create(InstanceId,ClusterSpec,ConnectNode_2,PodName2,PodNode2,PodDir2,HostSpec2,Status2),
   
     [
-     {instance_id_1,"c200_c201",pod_name_1,pod_node_1,pod_dir_1,"c200",candidate},
-     {instance_id_1,"c200_c201",pod_name_2,pod_node_2,pod_dir_2,"c201",deployed}
+     {instance_id_1,"c200_c201",cn1,pod_name_1,pod_node_1,pod_dir_1,"c200",candidate},
+     {instance_id_1,"c200_c201",cn2,pod_name_2,pod_node_2,pod_dir_2,"c201",deployed}
     ]=db_cluster_instance:read(InstanceId),
     
     
 
-    Spec=glurk,
-    {Spec,"cookie_c200_c201",
-     Spec,2,["c200","c201"],6,["c200","c201"]}=db_cluster_spec:read("c200_c201"),
-    
-    {ok,"cookie_c200_c201"}=db_cluster_instance:read(cookie,kuk),
-    {ok,Spec}=db_cluster_spec:read(dir,Spec),
-    {ok,2}=db_cluster_spec:read(num_controllers,Spec),
-    {ok,["c200","c201"]}=db_cluster_spec:read(controller_host_specs,Spec),
-    {ok,6}=db_cluster_spec:read(num_workers,Spec),
-    {ok,["c200","c201"]}=db_cluster_spec:read(worker_host_specs,Spec),
+    {ok,pod_name_1}=db_cluster_instance:read(pod_name,InstanceId,PodNode1),
+    {ok,pod_name_2}=db_cluster_instance:read(pod_name,InstanceId,PodNode2),
+     {ok,"c200_c201"}=db_cluster_instance:read(cluster_spec,InstanceId,PodNode1),
+    {ok,cn1}=db_cluster_instance:read(connect_node,InstanceId,PodNode1),
+    {ok,pod_node_1 }=db_cluster_instance:read(pod_node,InstanceId,PodNode1),
+    {ok,pod_dir_1}=db_cluster_instance:read(pod_dir,InstanceId,PodNode1),
+
+    {ok,"c200"}=db_cluster_instance:read(host_spec,InstanceId,PodNode1),
+    {ok,deployed}=db_cluster_instance:read(status,InstanceId,PodNode2),
   
-    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
-    {error,['Key eexists',glurk,"c200_c201",db_cluster_spec,_]}=db_cluster_spec:read(glurk,Spec),
+  
+    []=db_cluster_instance:read(status,InstanceId,glurk),
+    {error,['Key eexists',glurk,instance_id_1,db_cluster_instance,_]}=db_cluster_instance:read(glurk,InstanceId,PodNode1),
  
       
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
