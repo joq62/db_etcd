@@ -28,6 +28,16 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
+%% Special functions
+
+controller_nodes(InstanceId)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		  X#?RECORD.instance_id==InstanceId,
+		     X#?RECORD.type==controller])),
+    [X#?RECORD.pod_node||X<-Z].
+
+%%-------------------------------------------------------------------------------------
+
 create(InstanceId,ClusterSpec,Type,PodName,PodNode,PodDir,HostSpec,Status)->
     Record=#?RECORD{
 		    instance_id=InstanceId,
