@@ -28,11 +28,11 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-create(InstanceId,ClusterSpec,ConnectNode,PodName,PodNode,PodDir,HostSpec,Status)->
+create(InstanceId,ClusterSpec,Type,PodName,PodNode,PodDir,HostSpec,Status)->
     Record=#?RECORD{
 		    instance_id=InstanceId,
 		    cluster_spec=ClusterSpec,
-		    connect_node=ConnectNode,
+		    type=Type,
 		    pod_name=PodName,
 		    pod_node=PodNode,
 		    pod_dir=PodDir,
@@ -67,8 +67,8 @@ read(Key,InstanceId,PodNode)->
 		   case  Key of
 		       cluster_spec->
 			   {ok,X#?RECORD.cluster_spec};
-		       connect_node->
-			  {ok,X#?RECORD.connect_node};
+		       type->
+			  {ok,X#?RECORD.type};
 		       instance_id->
 			   {ok,X#?RECORD.instance_id};
 		       pod_name->
@@ -94,14 +94,14 @@ get_all_id()->
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    Result=[{X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.connect_node,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
-  %  [{InstanceId,ClusterSpec,ConnectNode,PodName,PodNode,PodDir,HostSpec,Status}||{?RECORD,InstanceId,ClusterSpec,ConnectNode,PodName,PodNode,PodDir,HostSpec,Status}<-Z].
+    Result=[{X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.type,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
+ 
     Result.
 
 read(InstanceId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.instance_id==InstanceId])),
-    [{X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.connect_node,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
+    [{X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.type,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
     
 
 
@@ -115,7 +115,7 @@ read(InstanceId,PodNode)->
 	       []->
 		   [];
 	       [X]->
-		   {X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.connect_node,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}
+		   {X#?RECORD.instance_id,X#?RECORD.cluster_spec,X#?RECORD.type,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}
 	   end,
     Result.
 
