@@ -55,13 +55,13 @@ create_instance_test()->
     HostSpec1="c200",
     Status1=candidate,
 
-    []=db_cluster_instance:controller_nodes(InstanceId),
+    []=db_cluster_instance:nodes(Type1,InstanceId),
 
     {atomic,ok}=db_cluster_instance:create(InstanceId,ClusterSpec,Type1,PodName1,PodNode1,PodDir1,HostSpec1,Status1),
     
     [{instance_id_1,"c200_c201",controller,pod_name_1,pod_node_1,pod_dir_1,"c200",candidate}]=db_cluster_instance:read(InstanceId),
  
-    Type2=controller,
+    Type2=connect,
     PodName2=pod_name_2,
     PodNode2=pod_node_2,
     PodDir2=pod_dir_2,
@@ -72,7 +72,7 @@ create_instance_test()->
   
     [
      {instance_id_1,"c200_c201",controller,pod_name_1,pod_node_1,pod_dir_1,"c200",candidate},
-     {instance_id_1,"c200_c201",controller,pod_name_2,pod_node_2,pod_dir_2,"c201",deployed}
+     {instance_id_1,"c200_c201",connect,pod_name_2,pod_node_2,pod_dir_2,"c201",deployed}
     ]=db_cluster_instance:read(InstanceId),
     
     
@@ -87,7 +87,7 @@ create_instance_test()->
     {ok,"c200"}=db_cluster_instance:read(host_spec,InstanceId,PodNode1),
     {ok,deployed}=db_cluster_instance:read(status,InstanceId,PodNode2),
   
-    [pod_node_1,pod_node_2]=db_cluster_instance:controller_nodes(InstanceId),
+    [pod_node_1]=db_cluster_instance:nodes(Type1,InstanceId),
   
     []=db_cluster_instance:read(status,InstanceId,glurk),
     {error,['Key eexists',glurk,instance_id_1,db_cluster_instance,_]}=db_cluster_instance:read(glurk,InstanceId,PodNode1),
