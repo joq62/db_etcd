@@ -41,14 +41,7 @@ pod_based_host_spec(HostSpec,Type,InstanceId)->
 		     X#?RECORD.instance_id==InstanceId,
 		     X#?RECORD.host_spec==HostSpec,
 		     X#?RECORD.type==Type])),
-    case [X#?RECORD.pod_node||X<-Z] of
-	[]->
-	    {error,[eexists,HostSpec,InstanceId,?MODULE,?LINE]};
-	[PodNode]->
-	    {ok,PodNode};
-	Reason ->
-	    {error,[unexpected,HostSpec,InstanceId,?MODULE,?LINE]}
-    end.
+    [X#?RECORD.pod_node||X<-Z].
     
 
 %%-------------------------------------------------------------------------------------
