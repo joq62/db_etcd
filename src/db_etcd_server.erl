@@ -97,11 +97,17 @@ handle_call({install},_From, State) ->
     Ok_HostSpec=[X||{ok,X}<-HostSpec],
     Err_HostSpec=[X||{error,X}<-HostSpec],
 
+    ok=db_appl_spec:create_table(),
+    ApplSpec=db_appl_spec:git_clone_load(),
+    Ok_ApplSpec=[X||{ok,X}<-ApplSpec],
+    Err_ApplSpec=[X||{error,X}<-ApplSpec],
+
    
 
     Reply=[
 	   {cluster_spec,Ok_ClusterSpec,Err_ClusterSpec},
-	   {host_spec,Ok_HostSpec,Err_HostSpec}],
+	   {host_spec,Ok_HostSpec,Err_HostSpec},
+	   {appl_spec,Ok_ApplSpec,Err_ApplSpec}],
 
     {reply, Reply, State};
 
