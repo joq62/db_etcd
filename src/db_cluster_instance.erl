@@ -36,6 +36,20 @@ nodes(Type,InstanceId)->
 		     X#?RECORD.type==Type])),
     [X#?RECORD.pod_node||X<-Z].
 
+pod_based_host_spec(HostSpec,InstanceId)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.instance_id==InstanceId,
+		     X#?RECORD.host_spec==HostSpec])),
+    case [X#?RECORD.pod_node||X<-Z] of
+	[]->
+	    {error,[eexists,HostSpec,InstanceId,?MODULE,?LINE]};
+	[PodNode]->
+	    {ok,PodNode};
+	Reason ->
+	    {error,[unexpected,HostSpec,InstanceId,?MODULE,?LINE]}
+    end.
+    
+
 %%-------------------------------------------------------------------------------------
 
 create(InstanceId,ClusterSpec,Type,PodName,PodNode,PodDir,HostSpec,Status)->
