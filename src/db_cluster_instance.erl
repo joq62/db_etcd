@@ -36,10 +36,11 @@ nodes(Type,InstanceId)->
 		     X#?RECORD.type==Type])),
     [X#?RECORD.pod_node||X<-Z].
 
-pod_based_host_spec(HostSpec,InstanceId)->
+pod_based_host_spec(HostSpec,Type,InstanceId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.instance_id==InstanceId,
-		     X#?RECORD.host_spec==HostSpec])),
+		     X#?RECORD.host_spec==HostSpec,
+		     X#?RECORD.type==Type])),
     case [X#?RECORD.pod_node||X<-Z] of
 	[]->
 	    {error,[eexists,HostSpec,InstanceId,?MODULE,?LINE]};
