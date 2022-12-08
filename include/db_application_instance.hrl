@@ -1,10 +1,12 @@
--define(TABLE,appl_instance).
+-define(TABLE,application_instance).
 -define(RECORD,?TABLE).
 -record(?RECORD,{
 		 instance_id,
+		 cluster_spec,
 		 appl_spec,
-		 cluster_instance,
+		 app,
 		 pod_node,
+		 host_spec,
 		 status
 		}).
 

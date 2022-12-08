@@ -5,9 +5,9 @@
 -define(RECORD,?TABLE).
 -record(?RECORD,{
 		 spec_id,
-		 cluster_deployment,
 		 appl_spec,
 		 vsn,
+		 cluster_spec,
 		 num_instances,
 		 affinity
 		}).

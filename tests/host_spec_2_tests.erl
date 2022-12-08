@@ -41,7 +41,7 @@ start()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["c100","c200","c201","c202","c300"]=lists:sort(db_host_spec:get_all_id()),
+    ["c100","c200","c201","c202","c300","c50"]=lists:sort(db_host_spec:get_all_id()),
 
     {"c200","c200","192.168.1.200",22,"ubuntu","festum01",[]}=db_host_spec:read("c200"),
     

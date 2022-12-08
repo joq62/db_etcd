@@ -31,17 +31,12 @@ start()->
 
     ok=cluster_spec_2_tests:start(),
     ok=cluster_instance_2_tests:start(),
-  %  ok=appl_deployment_2_tests:start(),
+    ok=appl_deployment_2_tests:start(),
+    ok=appl_instance_2_tests:start(),
+      
+    ok=host_spec_2_tests:start(),
+
  
- %   ok=cluster_application_deployment_2_tests:start(),
-
- %   ok=cluster_deployment_2_tests:start(),
- %   ok=cluster_state_tests:start(),
-
-  %  ok=host_spec_2_tests:start(),
-
-  %  ok=pod_info_2_tests:start(),
-    
    
    
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
