@@ -43,43 +43,42 @@ create_instance_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
    
     ok=db_appl_instance:create_table(),
-    
-    
-
-    InstanceId=instance_id_1,
-    ApplSpec1="appl_spec_1",
+        
     ClusterInstance1=cluster_instance_id_1,
+    ApplSpec1="appl_spec_1",
     PodNode1=pod_node_1,
     Status1=candidate,
 
-    {atomic,ok}=db_appl_instance:create(InstanceId,ApplSpec1,ClusterInstance1,PodNode1,Status1),
+    {atomic,ok}=db_appl_instance:create(ClusterInstance1,ApplSpec1,PodNode1,Status1),
     
-    [{instance_id_1,"appl_spec_1",cluster_instance_id_1,pod_node_1,candidate}]=db_appl_instance:read(InstanceId),
+    [{cluster_instance_id_1,"appl_spec_1",pod_node_1,candidate}]=db_appl_instance:read(ClusterInstance1),
  
     
     ApplSpec2="appl_spec_2",
-    ClusterInstance2=cluster_instance_id_2,
-    PodNode2=pod_node_2,
+     PodNode2=pod_node_2,
     Status2=deployed,
 
-    {atomic,ok}=db_appl_instance:create(InstanceId,ApplSpec2,ClusterInstance2,PodNode2,Status2),
+    {atomic,ok}=db_appl_instance:create(ClusterInstance1,ApplSpec2,PodNode2,Status2),
   
    [
-    {instance_id_1,"appl_spec_1",cluster_instance_id_1,pod_node_1,candidate},
-    {instance_id_1,"appl_spec_2",cluster_instance_id_2,pod_node_2,deployed}
-   ]=db_appl_instance:read(InstanceId),
+    {cluster_instance_id_1,"appl_spec_1",pod_node_1,candidate},
+    {cluster_instance_id_1,"appl_spec_2",pod_node_2,deployed}
+   ]=db_appl_instance:read(cluster_instance_id_1),
     
     
 
-    {ok,"appl_spec_1"}=db_appl_instance:read(appl_spec,InstanceId,PodNode1),
-    {ok,"appl_spec_2"}=db_appl_instance:read(appl_spec,InstanceId,PodNode2),
-    {ok,cluster_instance_id_1}=db_appl_instance:read(cluster_instance,InstanceId,PodNode1),
-    {ok,cluster_instance_id_2}=db_appl_instance:read(cluster_instance,InstanceId,PodNode2),
-    {ok,candidate}=db_appl_instance:read(status,InstanceId,PodNode1),
+    {ok,"appl_spec_1"}=db_appl_instance:read(appl_spec,cluster_instance_id_1,PodNode1),
+    {ok,"appl_spec_2"}=db_appl_instance:read(appl_spec,cluster_instance_id_1,PodNode2),
+    {ok,cluster_instance_id_1}=db_appl_instance:read(cluster_instance,cluster_instance_id_1,PodNode1),
+    {ok,cluster_instance_id_1}=db_appl_instance:read(cluster_instance,cluster_instance_id_1,PodNode2),
+    {ok,candidate}=db_appl_instance:read(status,cluster_instance_id_1,PodNode1),
   
-    []=db_appl_instance:read(status,InstanceId,glurk),
-    {error,['Key eexists',glurk,instance_id_1,db_appl_instance,_]}=db_appl_instance:read(glurk,InstanceId,PodNode1),
+    []=db_appl_instance:read(status,cluster_instance_id_1,glurk),
+    {error,['Key eexists',glurk,cluster_instance_id_1,pod_node_1,db_appl_instance,_]}=db_appl_instance:read(glurk,cluster_instance_id_1,PodNode1),
  
+    {atomic,ok}=db_appl_instance:delete(cluster_instance_id_1,PodNode1),
+   [{cluster_instance_id_1,"appl_spec_2",pod_node_2,deployed}]=db_appl_instance:read(cluster_instance_id_1),
+    
       
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
