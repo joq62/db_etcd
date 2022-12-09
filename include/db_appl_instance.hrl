@@ -4,6 +4,7 @@
 		 cluster_instance,
 		 appl_spec,
 		 pod_node,
+		 host_spec,
 		 status
 		}).
 

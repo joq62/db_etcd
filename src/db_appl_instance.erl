@@ -33,11 +33,12 @@ add_node(Node,StorageType)->
 
 %%-------------------------------------------------------------------------------------
 
-create(ClusterInstance,ApplSpec,PodNode,Status)->
+create(ClusterInstance,ApplSpec,PodNode,HostSpec,Status)->
     Record=#?RECORD{
 		    cluster_instance=ClusterInstance,
 		    appl_spec=ApplSpec,
 		    pod_node=PodNode,
+		    host_spec=HostSpec,
 		    status=Status
 
 		   },
@@ -74,6 +75,9 @@ read(Key,ClusterInstance,PodNode)->
 			   {ok,R};
 		       pod_node->
 			   PodNode;
+		       host_spec->
+			   [X|_]=Z,
+			   {ok,X#?RECORD.host_spec};
 		       status->
 			   R=[X#?RECORD.status||X<-Z],
 			   {ok,R};
@@ -90,14 +94,14 @@ get_all_id()->
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    Result=[{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}||X<-Z],
+    Result=[{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
  
     Result.
 
 read(ClusterInstance)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.cluster_instance==ClusterInstance])),
-    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}||X<-Z].
+    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
     
 
 
@@ -105,15 +109,9 @@ read(ClusterInstance,PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.cluster_instance==ClusterInstance,
 		     X#?RECORD.pod_node==PodNode])),
-    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}||X<-Z].
+    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
    
-  %  Result=case Z of
-%	       []->
-%		   [];
-%	       [X]->
-%		   {X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}
-%	   end,
- %   Result.
+ 
 
 delete(ClusterInstance,ApplSpec,PodNode) ->
     F = fun() -> 
