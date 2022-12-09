@@ -64,16 +64,19 @@ read(Key,ClusterInstance,PodNode)->
     Return=case Z of
 	       []->
 		   [];
-	       [X]->
+	       Z->
 		   case  Key of
 		       cluster_instance->
+			   [X|_]=Z,
 			   {ok,X#?RECORD.cluster_instance };
 		       appl_spec->
-			   {ok,X#?RECORD.appl_spec};
+			   R=[X#?RECORD.appl_spec||X<-Z],
+			   {ok,R};
 		       pod_node->
-			   {ok,X#?RECORD.pod_node};
+			   PodNode;
 		       status->
-			   {ok,X#?RECORD.status};
+			   R=[X#?RECORD.status||X<-Z],
+			   {ok,R};
 		       Err ->
 			   {error,['Key eexists',Err,ClusterInstance,PodNode,?MODULE,?LINE]}
 		   end
@@ -102,20 +105,21 @@ read(ClusterInstance,PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.cluster_instance==ClusterInstance,
 		     X#?RECORD.pod_node==PodNode])),
-    
+    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}||X<-Z].
    
-    Result=case Z of
-	       []->
-		   [];
-	       [X]->
-		   {X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}
-	   end,
-    Result.
+  %  Result=case Z of
+%	       []->
+%		   [];
+%	       [X]->
+%		   {X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.status}
+%	   end,
+ %   Result.
 
-delete(ClusterInstance,PodNode) ->
+delete(ClusterInstance,ApplSpec,PodNode) ->
     F = fun() -> 
 		Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 				 X#?RECORD.cluster_instance==ClusterInstance,
+				 X#?RECORD.appl_spec==ApplSpec,
 				 X#?RECORD.pod_node==PodNode])),
 		Result=case Z of
 			   []->
