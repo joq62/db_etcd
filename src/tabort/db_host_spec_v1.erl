@@ -1,32 +1,12 @@
-%%% @author c50 <joq62@c50>
-%%% @copyright (C) 2022, c50
-%%% @doc
-%%%
-%%% @end
-%%% Created : 21 Dec 2022 by c50 <joq62@c50>
--module(db_host_spec).
-
-%% --------------------------------------------------------------------
-%% Include files
-%% --------------------------------------------------------------------
+-module(db_host_spec_v1).
 -import(lists, [foreach/2]).
+%-compile(export_all).
+
 -include_lib("stdlib/include/qlc.hrl").
 -include("db_host_spec.hrl").
 
-%% External exports
 
--export([create_table/0,create_table/2,add_node/2]).
--export([create/7,delete/1]).
--export([read_all/0,read/1,read/2,get_all_id/0]).
--export([do/1]).
--export([member/1]).
--export([git_clone_load/0]).
 
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
@@ -37,11 +17,6 @@ create_table(NodeList,StorageType)->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
 				 {StorageType,NodeList}]),
     mnesia:wait_for_tables([?TABLE], 20000).
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
 
 add_node(Node,StorageType)->
     Result=case mnesia:change_config(extra_db_nodes, [Node]) of
@@ -54,11 +29,6 @@ add_node(Node,StorageType)->
 		   Reason
 	   end,
     Result.
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
 
 create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig)->
     Record=#?RECORD{
@@ -72,23 +42,6 @@ create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig)->
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-
-delete(Object) ->
-    F = fun() -> 
-		mnesia:delete({?TABLE,Object})
-		    
-	end,
-    mnesia:transaction(F).
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
 
 member(SpecId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -100,28 +53,6 @@ member(SpecId)->
 		   true
 	   end,
     Member.
-
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-
-read_all() ->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z].
-
-read(Object)->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.spec_id==Object])),
-    Result=case Z of
-	       []->
-		  [];
-	       _->
-		   [Info]=[{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z],
-		   Info
-	   end,
-    Result.
 
 read(Key,SpecId)->
     Return=case read(SpecId) of
@@ -152,12 +83,29 @@ get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
     [SpecId||{?RECORD,SpecId,_HostName,_LocalIp,_SshPort,_Uid,_Passwd,_ApplConfig}<-Z].
     
+read_all() ->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    [{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z].
 
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
+read(Object)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.spec_id==Object])),
+    Result=case Z of
+	       []->
+		  [];
+	       _->
+		   [Info]=[{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z],
+		   Info
+	   end,
+    Result.
+
+delete(Object) ->
+    F = fun() -> 
+		mnesia:delete({?TABLE,Object})
+		    
+	end,
+    mnesia:transaction(F).
+
 
 do(Q) ->
     F = fun() -> qlc:e(Q) end,
@@ -169,15 +117,7 @@ do(Q) ->
 	   end,
     Result.
 
-%% --------------------------------------------------------------------
-%%% Internal functions
-%% --------------------------------------------------------------------
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-
+%%-------------------------------------------------------------------------
 git_clone_load()->
     ok=create_table(),
     Result=case git_clone() of
@@ -194,11 +134,6 @@ git_clone_load()->
 		   end
 	   end,
     Result.
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
 
 git_clone()->
     TempDirName=erlang:integer_to_list(os:system_time(microsecond),36)++".dir",
@@ -214,13 +149,8 @@ git_clone()->
 	       true->
 		   {ok,TempDirName,GitDir}
 	   end,
-    Result.
-
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
+    Result.	from_file()->
+    from_file(?HostSpecDir).
 
 from_file(ApplSpecDir)->
     {ok,FileNames}=file:list_dir(ApplSpecDir),

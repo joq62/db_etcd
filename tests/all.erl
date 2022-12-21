@@ -10,7 +10,7 @@
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
 -module(all).      
- 
+  
 -export([start/0]).
 %% --------------------------------------------------------------------
 %% Include files
@@ -27,14 +27,12 @@ start()->
 
     ok=setup(),
 
-    ok=install_tests:start(),
-
-    ok=cluster_spec_2_tests:start(),
-    ok=cluster_instance_2_tests:start(),
-    ok=appl_deployment_2_tests:start(),
-    ok=appl_instance_2_tests:start(),
+    ok=cluster_spec_tests:start(),
+    ok=cluster_instance_tests:start(),
+    ok=appl_deployment_tests:start(),
+    ok=appl_instance_tests:start(),
       
-    ok=host_spec_2_tests:start(),
+    ok=host_spec_tests:start(),
 
  
    
@@ -71,7 +69,5 @@ setup()->
     
     {ok,_}=db_etcd_server:start(),
     pong=db_etcd:ping(),
-    timer:sleep(5000),
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-
+    
     ok.

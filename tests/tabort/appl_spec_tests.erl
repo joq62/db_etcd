@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(cluster_spec_tests).      
+-module(appl_spec_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,6 +26,8 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
+    ok=install_spec_test(),
+    ok=load_spec_test(),
     ok=read_specs_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
@@ -39,24 +41,13 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-read_specs_test()->
+install_spec_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    Spec="prototype_c201",
-    true=lists:member(Spec,db_cluster_spec:get_all_id()),
-
-    {"prototype_c201",
-     "cookie_prototype_c201","prototype_c201",1,["c201"],2,["c201"]}=db_cluster_spec:read(Spec),
     
-    {ok,"cookie_prototype_c201"}=db_cluster_spec:read(cookie,Spec),
-    {ok,Spec}=db_cluster_spec:read(dir,Spec),
-    {ok,1}=db_cluster_spec:read(num_controllers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(controller_host_specs,Spec),
-    {ok,2}=db_cluster_spec:read(num_workers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(worker_host_specs,Spec),
-  
-    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
-    {error,['Key eexists',glurk,"prototype_c201",db_cluster_spec,_]}=db_cluster_spec:read(glurk,Spec),
- 
+    GitClone=db_appl_spec:git_clone(),
+    {ok,"application_specs"}=GitClone,
+   
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
 
 %% --------------------------------------------------------------------
@@ -64,12 +55,53 @@ read_specs_test()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+load_spec_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    FromFileResult=db_appl_spec:from_file(),
+    true=lists:member({ok,"math.spec"},FromFileResult),
+
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+read_specs_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    
+    ["db_etcd","math"]=lists:sort(db_appl_spec:get_all_id()),
+    
+    {"math",
+     "math",
+     "0.1.0",
+     math,
+     "https://github.com/joq62/math.git"
+    }=db_appl_spec:read("math"),
+    
+    {ok,"math"}=db_appl_spec:read(appl_name,"math"),
+    {ok,"0.1.0"}=db_appl_spec:read(vsn,"math"),
+    {ok,math}=db_appl_spec:read(app,"math"),
+    {ok,"https://github.com/joq62/math.git"}=db_appl_spec:read(gitpath,"math"),
+    {error,['Key eexists',glurk,"math",db_appl_spec,_]}=db_appl_spec:read(glurk,"math"),
+    {error,[eexist,"glurk",db_appl_spec,_]}=db_appl_spec:read( vsn,"glurk"),
+
+    {"db_etcd",
+     "db_etcd_app",
+     "0.1.0",
+     db_etcd_app,
+     "https://github.com/joq62/db_etcd_app.git"
+    }=db_appl_spec:read("db_etcd"),
+    
+    
+    
+    
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    ok.
+
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -88,5 +120,8 @@ setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
        
     pong=db_etcd:ping(),
+    ok=db_appl_spec:create_table(),
     
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
     ok.

@@ -9,13 +9,13 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(cluster_spec_tests).      
+-module(appl_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-
+-define(ClusterSpec,"prototype_c201").
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -26,12 +26,26 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=read_specs_test(),
+    ok=deploy_test(),
+   % ok=load_start_math(),
+   % ok=check_present_missing(),
+  				
+     
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok.
 
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+deploy_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    appl_server:deploy_appls(?ClusterSpec),
+
+    ok.
 
 
 %% --------------------------------------------------------------------
@@ -39,24 +53,16 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-read_specs_test()->
+load_start_math()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    Spec="prototype_c201",
-    true=lists:member(Spec,db_cluster_spec:get_all_id()),
+    ApplSpec="math",
+    HostSpec="c201",
 
-    {"prototype_c201",
-     "cookie_prototype_c201","prototype_c201",1,["c201"],2,["c201"]}=db_cluster_spec:read(Spec),
-    
-    {ok,"cookie_prototype_c201"}=db_cluster_spec:read(cookie,Spec),
-    {ok,Spec}=db_cluster_spec:read(dir,Spec),
-    {ok,1}=db_cluster_spec:read(num_controllers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(controller_host_specs,Spec),
-    {ok,2}=db_cluster_spec:read(num_workers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(worker_host_specs,Spec),
-  
-    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
-    {error,['Key eexists',glurk,"prototype_c201",db_cluster_spec,_]}=db_cluster_spec:read(glurk,Spec),
- 
+    TimeOut=10*1000,
+
+    {ok,PodNode}=appl_server:new(ApplSpec,HostSpec,?ClusterSpec,TimeOut),
+    42=rpc:call(PodNode,test_add,add,[20,22],2000),
+
     ok.
 
 %% --------------------------------------------------------------------
@@ -64,7 +70,26 @@ read_specs_test()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+check_present_missing()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+   
+  %  io:format("Apps ~p~n",[[rpc:call(Node,application,which_applications,[],2000)||Node<-nodes()]]),
+    [{"math",PodNode,math}]=appl_server:present_apps(?ClusterSpec),
+ %   io:format("Presents ~p~n",[{appl_server:present_apps(?ClusterSpec),?FUNCTION_NAME,?LINE}]),
+  %  io:format("Missing ~p~n",[{appl_server:missing_apps(?ClusterSpec),?FUNCTION_NAME,?LINE}]),
 
+    rpc:call(PodNode,application,stop,[math],5000),
+    rpc:call(PodNode,application,unload,[math],5000),
+
+  %  io:format("Presents ~p~n",[{appl_server:present_apps(?ClusterSpec),?FUNCTION_NAME,?LINE}]),
+  %  io:format("Missing ~p~n",[{appl_server:missing_apps(?ClusterSpec),?FUNCTION_NAME,?LINE}]),
+    
+    
+    
+
+
+
+    ok.
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible
@@ -82,11 +107,11 @@ read_specs_test()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-       
-    pong=db_etcd:ping(),
-    
+
+    pod_server:start_monitoring(?ClusterSpec),
+    appl_server:start_monitoring(?ClusterSpec),
+
     ok.

@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(cluster_spec_tests).      
+-module(cluster_instance_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -26,7 +26,7 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=read_specs_test(),
+    ok=create_instance_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
@@ -39,37 +39,61 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-read_specs_test()->
+create_instance_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    Spec="prototype_c201",
-    true=lists:member(Spec,db_cluster_spec:get_all_id()),
-
-    {"prototype_c201",
-     "cookie_prototype_c201","prototype_c201",1,["c201"],2,["c201"]}=db_cluster_spec:read(Spec),
+   
+    ok=db_cluster_instance:create_table(),
     
-    {ok,"cookie_prototype_c201"}=db_cluster_spec:read(cookie,Spec),
-    {ok,Spec}=db_cluster_spec:read(dir,Spec),
-    {ok,1}=db_cluster_spec:read(num_controllers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(controller_host_specs,Spec),
-    {ok,2}=db_cluster_spec:read(num_workers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(worker_host_specs,Spec),
-  
-    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
-    {error,['Key eexists',glurk,"prototype_c201",db_cluster_spec,_]}=db_cluster_spec:read(glurk,Spec),
+    
+
+    ClusterSpec="c200_c201",
+    Type1=controller,
+    PodName1=pod_name_1,
+    PodNode1=pod_node_1,
+    PodDir1=pod_dir_1,
+    HostSpec1="c200",
+    Status1=candidate,
+
+    []=db_cluster_instance:nodes(Type1,ClusterSpec),
+
+    {atomic,ok}=db_cluster_instance:create(ClusterSpec,Type1,PodName1,PodNode1,PodDir1,HostSpec1,Status1),
+    
+    [{"c200_c201",controller,pod_name_1,pod_node_1,pod_dir_1,"c200",candidate}]=db_cluster_instance:read(ClusterSpec),
  
+    Type2=connect,
+    PodName2=pod_name_2,
+    PodNode2=pod_node_2,
+    PodDir2=pod_dir_2,
+    HostSpec2="c201",
+    Status2=deployed,
+
+    {atomic,ok}=db_cluster_instance:create(ClusterSpec,Type2,PodName2,PodNode2,PodDir2,HostSpec2,Status2),
+  
+    [
+     {"c200_c201",controller,pod_name_1,pod_node_1,pod_dir_1,"c200",candidate},
+     {"c200_c201",connect,pod_name_2,pod_node_2,pod_dir_2,"c201",deployed}
+    ]=db_cluster_instance:read(ClusterSpec),
+    
+    
+
+    {ok,pod_name_1}=db_cluster_instance:read(pod_name,ClusterSpec,PodNode1),
+    {ok,pod_name_2}=db_cluster_instance:read(pod_name,ClusterSpec,PodNode2),
+     {ok,"c200_c201"}=db_cluster_instance:read(cluster_spec,ClusterSpec,PodNode1),
+    {ok,controller}=db_cluster_instance:read(type,ClusterSpec,PodNode1),
+    {ok,pod_node_1 }=db_cluster_instance:read(pod_node,ClusterSpec,PodNode1),
+    {ok,pod_dir_1}=db_cluster_instance:read(pod_dir,ClusterSpec,PodNode1),
+
+    {ok,"c200"}=db_cluster_instance:read(host_spec,ClusterSpec,PodNode1),
+    {ok,deployed}=db_cluster_instance:read(status,ClusterSpec,PodNode2),
+  
+    [pod_node_1]=db_cluster_instance:nodes(Type1,ClusterSpec),
+  
+    []=db_cluster_instance:read(status,ClusterSpec,glurk),
+    {error,['Key eexists',glurk,"c200_c201",db_cluster_instance,_]}=db_cluster_instance:read(glurk,ClusterSpec,PodNode1),
+ 
+      
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()

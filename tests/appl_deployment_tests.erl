@@ -26,8 +26,6 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=install_spec_test(),
-    ok=load_spec_test(),
     ok=read_specs_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
@@ -41,45 +39,20 @@ start()->
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
-install_spec_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    GitClone=db_appl_deployment:git_clone(),
-    {ok,"application_deployments"}=GitClone,
-   
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-load_spec_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    FromFileResult=db_appl_deployment:from_file(),
-    true=lists:member({ok,"math.deployment"},FromFileResult),
-
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["math"]=lists:sort(db_appl_deployment:get_all_id()),
+    true=lists:member("db_test",db_appl_spec:get_all_id()),
     
-    {"math","math","0.1.0",2,[]}=db_appl_deployment:read("math"),
+   {"db_test","db_dummy_application",
+    "0.1.0","prototype_c201",1,["c201"]}=db_appl_deployment:read("db_test"),
     
-    {ok,"math"}=db_appl_deployment:read(appl_name,"math"),
-    {ok,"0.1.0"}=db_appl_deployment:read(vsn,"math"),
-    {ok,2}=db_appl_deployment:read(num_instances,"math"),
-    {ok,[]}=db_appl_deployment:read(affinity,"math"),
-    {error,['Key eexists',glurk,"math",db_appl_deployment,_]}=db_appl_deployment:read(glurk,"math"),
+    {ok,"db_dummy_application"}=db_appl_deployment:read(appl_spec,"db_test"),
+    {ok,"0.1.0"}=db_appl_deployment:read(vsn,"db_test"),
+    {ok,1}=db_appl_deployment:read(num_instances,"db_test"),
+    {ok,["c201"]}=db_appl_deployment:read(affinity,"db_test"),
+
+    {error,['Key eexists',glurk,"db_test",db_appl_deployment,_]}=db_appl_deployment:read(glurk,"db_test"),
     {error,[eexist,"glurk",db_appl_deployment,_]}=db_appl_deployment:read( vsn,"glurk"),
     
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),

@@ -1,9 +1,47 @@
--module(db_appl_instance).
--import(lists, [foreach/2]).
--compile(export_all).
+%%% @author c50 <joq62@c50>
+%%% @copyright (C) 2022, c50
+%%% @doc
+%%%
+%%% @end
+%%% Created : 21 Dec 2022 by c50 <joq62@c50>
 
+-module(db_appl_instance).
+
+%% --------------------------------------------------------------------
+%% Include files
+%% --------------------------------------------------------------------
+-import(lists, [foreach/2]).
 -include_lib("stdlib/include/qlc.hrl").
 -include("db_appl_instance.hrl").
+
+%% External exports
+
+-export([get_pod_appl_specs/1]).
+-export([create_table/0,create_table/2,add_node/2]).
+-export([create/5,delete/3]).
+-export([read_all/0,read/1,read/2,read/3,get_all_id/0]).
+-export([member/1]).
+-export([do/1]).
+-export([]).
+
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+
+get_pod_appl_specs(ClusterInstance)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_instance==ClusterInstance])),
+    [{X#?RECORD.appl_spec,X#?RECORD.pod_node}||X<-Z].
+    
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
@@ -15,6 +53,11 @@ create_table(NodeList,StorageType)->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
 				 {StorageType,NodeList}]),
     mnesia:wait_for_tables([?TABLE], 20000).
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
 
 add_node(Node,StorageType)->
     Result=case mnesia:change_config(extra_db_nodes, [Node]) of
@@ -28,10 +71,11 @@ add_node(Node,StorageType)->
 	   end,
     Result.
 
-%% Special functions
-
-
-%%-------------------------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
 
 create(ClusterInstance,ApplSpec,PodNode,HostSpec,Status)->
     Record=#?RECORD{
@@ -45,6 +89,32 @@ create(ClusterInstance,ApplSpec,PodNode,HostSpec,Status)->
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+
+delete(ClusterInstance,ApplSpec,PodNode) ->
+    F = fun() -> 
+		Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+				 X#?RECORD.cluster_instance==ClusterInstance,
+				 X#?RECORD.appl_spec==ApplSpec,
+				 X#?RECORD.pod_node==PodNode])),
+		case Z of
+		    []->
+			mnesia:abort({error,[eexists_record,ClusterInstance,PodNode,?MODULE,?LINE]});
+		    [X]->
+			mnesia:delete_object(?TABLE, X, write)    
+		end
+	end,
+    mnesia:transaction(F).
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+
 member(ClusterInstance)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
 		     X#?RECORD.cluster_instance==ClusterInstance])),
@@ -56,7 +126,32 @@ member(ClusterInstance)->
 	   end,
     Member.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+    
+read_all() ->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    Result=[{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
+ 
+    Result.
 
+read(ClusterInstance)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_instance==ClusterInstance])),
+    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
+    
+
+
+read(ClusterInstance,PodNode)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_instance==ClusterInstance,
+		     X#?RECORD.pod_node==PodNode])),
+    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
+
+   
 
 read(Key,ClusterInstance,PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -88,46 +183,16 @@ read(Key,ClusterInstance,PodNode)->
     Return.
 
 
+
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
     [ClusterInstance||{?RECORD,ClusterInstance,_ApplSpec,_PodNode,_Status}<-Z].
-    
-read_all() ->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    Result=[{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
- 
-    Result.
 
-read(ClusterInstance)->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_instance==ClusterInstance])),
-    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
-    
-
-
-read(ClusterInstance,PodNode)->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_instance==ClusterInstance,
-		     X#?RECORD.pod_node==PodNode])),
-    [{X#?RECORD.cluster_instance,X#?RECORD.appl_spec,X#?RECORD.pod_node,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
-   
- 
-
-delete(ClusterInstance,ApplSpec,PodNode) ->
-    F = fun() -> 
-		Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-				 X#?RECORD.cluster_instance==ClusterInstance,
-				 X#?RECORD.appl_spec==ApplSpec,
-				 X#?RECORD.pod_node==PodNode])),
-		Result=case Z of
-			   []->
-			       mnesia:abort({error,[eexists_record,ClusterInstance,PodNode,?MODULE,?LINE]});
-			   [X]->
-			       mnesia:delete_object(?TABLE, X, write)    
-		       end
-	end,
-    mnesia:transaction(F).
-
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
 
 do(Q) ->
     F = fun() -> qlc:e(Q) end,
@@ -139,4 +204,11 @@ do(Q) ->
 	   end,
     Result.
 
-%%-------------------------------------------------------------------------
+%% --------------------------------------------------------------------
+%%% Internal functions
+%% --------------------------------------------------------------------
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------

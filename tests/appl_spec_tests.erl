@@ -26,44 +26,11 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok=setup(),
-    ok=install_spec_test(),
-    ok=load_spec_test(),
     ok=read_specs_test(),
   
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
     ok.
-
-
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-install_spec_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    GitClone=db_appl_spec:git_clone(),
-    {ok,"application_specs"}=GitClone,
-   
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-load_spec_test()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
-    FromFileResult=db_appl_spec:from_file(),
-    true=lists:member({ok,"math.spec"},FromFileResult),
-
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    ok.
-
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -73,33 +40,22 @@ load_spec_test()->
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    ["db_etcd","math"]=lists:sort(db_appl_spec:get_all_id()),
+    true=lists:member("db_test",db_appl_spec:get_all_id()),
     
-    {"math",
-     "math",
+    {"db_test",
+     "db_test",
      "0.1.0",
      math,
      "https://github.com/joq62/math.git"
-    }=db_appl_spec:read("math"),
+    }=db_appl_spec:read("db_test"),
     
-    {ok,"math"}=db_appl_spec:read(appl_name,"math"),
-    {ok,"0.1.0"}=db_appl_spec:read(vsn,"math"),
-    {ok,math}=db_appl_spec:read(app,"math"),
-    {ok,"https://github.com/joq62/math.git"}=db_appl_spec:read(gitpath,"math"),
-    {error,['Key eexists',glurk,"math",db_appl_spec,_]}=db_appl_spec:read(glurk,"math"),
+    {ok,"db_test"}=db_appl_spec:read(appl_name,"db_test"),
+    {ok,"0.1.0"}=db_appl_spec:read(vsn,"db_test"),
+    {ok,math}=db_appl_spec:read(app,"db_test"),
+    {ok,"https://github.com/joq62/math.git"}=db_appl_spec:read(gitpath,"db_test"),
+    {error,['Key eexists',glurk,"db_test",db_appl_spec,_]}=db_appl_spec:read(glurk,"db_test"),
     {error,[eexist,"glurk",db_appl_spec,_]}=db_appl_spec:read( vsn,"glurk"),
 
-    {"db_etcd",
-     "db_etcd_app",
-     "0.1.0",
-     db_etcd_app,
-     "https://github.com/joq62/db_etcd_app.git"
-    }=db_appl_spec:read("db_etcd"),
-    
-    
-    
-    
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
 
 
@@ -120,8 +76,5 @@ setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
        
     pong=db_etcd:ping(),
-    ok=db_appl_spec:create_table(),
     
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-
     ok.

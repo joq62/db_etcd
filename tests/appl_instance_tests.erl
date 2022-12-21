@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(appl_instance_2_tests).      
+-module(appl_instance_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -42,8 +42,6 @@ start()->
 create_instance_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
    
-    ok=db_appl_instance:create_table(),
-        
     ClusterInstance1=cluster_instance_id_1,
     ApplSpec1="appl_spec_1",
     PodNode1=pod_node_1,
@@ -90,30 +88,10 @@ create_instance_test()->
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
 
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
        
     pong=db_etcd:ping(),
     
-    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-
     ok.

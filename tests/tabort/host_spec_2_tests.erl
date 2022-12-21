@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(cluster_spec_tests).      
+-module(host_spec_2_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -33,7 +33,6 @@ start()->
     ok.
 
 
-
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible
@@ -41,22 +40,33 @@ start()->
 %% --------------------------------------------------------------------
 read_specs_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    Spec="prototype_c201",
-    true=lists:member(Spec,db_cluster_spec:get_all_id()),
-
-    {"prototype_c201",
-     "cookie_prototype_c201","prototype_c201",1,["c201"],2,["c201"]}=db_cluster_spec:read(Spec),
     
-    {ok,"cookie_prototype_c201"}=db_cluster_spec:read(cookie,Spec),
-    {ok,Spec}=db_cluster_spec:read(dir,Spec),
-    {ok,1}=db_cluster_spec:read(num_controllers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(controller_host_specs,Spec),
-    {ok,2}=db_cluster_spec:read(num_workers,Spec),
-    {ok,["c201"]}=db_cluster_spec:read(worker_host_specs,Spec),
-  
-    {error,[eexist,"glurk",db_cluster_spec,_]}=db_cluster_spec:read(cookie,"glurk"),
-    {error,['Key eexists',glurk,"prototype_c201",db_cluster_spec,_]}=db_cluster_spec:read(glurk,Spec),
+    AllHosts=lists:sort(db_host_spec:get_all_id()),
+    true=lists:member("c50",AllHosts),
+
+    {"c200","c200","192.168.1.200",22,"ubuntu","festum01",[]}=db_host_spec:read("c200"),
+    
+    {ok,"c200"}=db_host_spec:read(hostname,"c200"),
+    {ok,"192.168.1.200"}=db_host_spec:read(local_ip,"c200"),
+    {ok,22}=db_host_spec:read(ssh_port,"c200"),
+    {ok,"ubuntu"}=db_host_spec:read(uid,"c200"),
+    {ok,"festum01"}=db_host_spec:read(passwd,"c200"),
+    {ok,[]}=db_host_spec:read(application_config,"c200"),
+    
+
+
+    {error,[eexist,"glurk",db_host_spec,_]}=db_host_spec:read(ssh_port,"glurk"),
+    {error,['Key eexists',glurk,"c200",db_host_spec,_]}=db_host_spec:read(glurk,"c200"),
  
+    {"c201","c201","192.168.1.201",22,
+     "ubuntu","festum01",
+     [{conbee,[{conbee_addr,"172.17.0.2"},
+	       {conbee_port,80},
+	       {conbee_key,"D83FA13F74"}]}]
+    }=db_host_spec:read("c201"),
+    
+    
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     ok.
 
 %% --------------------------------------------------------------------
@@ -89,4 +99,6 @@ setup()->
        
     pong=db_etcd:ping(),
     
+    io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
     ok.
