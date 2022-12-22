@@ -30,8 +30,8 @@
 %%--------------------------------------------------------------------
 
 create_table()->
-    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)} %,
-				% {type,bag}
+    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
+				 {type,set}
 				]),
     mnesia:wait_for_tables([?TABLE], 20000).
 
