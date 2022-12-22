@@ -16,7 +16,7 @@
 
 %% External exports
 -export([create_table/0,create_table/2,add_node/2]).
--export([create/4,delete/1]).
+-export([create/7,delete/1]).
 -export([read_all/0,read/1,read/2,get_all_id/0]).
 -export([do/1]).
 -export([member/1]).
@@ -63,12 +63,15 @@ add_node(Node,StorageType)->
 %% @end
 %%--------------------------------------------------------------------
 
-create(ClusterSpec,Cookie,RootDir,Pods)->
+create(ClusterSpec,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs)->
     Record=#?RECORD{
-		    cluster_spec=ClusterSpec,
+		    spec_id=ClusterSpec,
 		    cookie=Cookie,
-		    root_dir=RootDir,
-		    pods=Pods
+		    dir=ClusterDir,
+		    num_controllers=NumControllers,
+		    controller_host_specs=ControllerHostSpecs,
+		    num_workers=NumWorkers,
+		    worker_host_specs=WorkerHostSpecs
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -78,9 +81,9 @@ create(ClusterSpec,Cookie,RootDir,Pods)->
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-delete(ClusterSpec) ->
+delete(Object) ->
     F = fun() ->
-                mnesia:delete({?TABLE,ClusterSpec})
+                mnesia:delete({?TABLE,Object})
 
         end,
     mnesia:transaction(F).
@@ -91,9 +94,9 @@ delete(ClusterSpec) ->
 %% @end
 %%--------------------------------------------------------------------
 
-member(ClusterSpec)->
+member(SpecId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_spec==ClusterSpec])),
+		     X#?RECORD.spec_id==SpecId])),
     Member=case Z of
 	       []->
 		   false;
@@ -109,22 +112,26 @@ member(ClusterSpec)->
 %% @end
 %%--------------------------------------------------------------------
 
-read(Key,ClusterSpec)->
-    Return=case read(ClusterSpec) of
+read(Key,SpecId)->
+    Return=case read(SpecId) of
 	       []->
-		   {error,[eexist,ClusterSpec,?MODULE,?LINE]};
-	       {ClusterSpec,Cookie,RootDir,Pods} ->
+		   {error,[eexist,SpecId,?MODULE,?LINE]};
+	       {_SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs} ->
 		   case  Key of
-		      cluster_spec->
-			   {ok,ClusterSpec};
-		       cookie->
+		      cookie->
 			   {ok,Cookie};
-		       root_dir->
-			   {ok,RootDir};
-		       pods->
-			   {ok,Pods};
+		       dir->
+			   {ok,ClusterDir};
+		       num_controllers->
+			   {ok,NumControllers};
+		       controller_host_specs->
+			   {ok,ControllerHostSpecs};
+		       num_workers->
+			   {ok,NumWorkers};
+		       worker_host_specs->
+			   {ok,WorkerHostSpecs};
 		       Err ->
-			   {error,['Key eexists',Err,ClusterSpec,?MODULE,?LINE]}
+			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
 	   end,
     Return.
@@ -132,22 +139,20 @@ read(Key,ClusterSpec)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [Record#?RECORD.cluster_spec||Record<-Z].
+    [SpecId||{?RECORD,SpecId,_Cookie,_ClusterDir,_NumControllers,_ControllerHostSpecs,_NumWorkers,_WorkerHostSpecs}<-Z].
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{Record#?RECORD.cluster_spec,Record#?RECORD.cookie,
-      Record#?RECORD.root_dir,Record#?RECORD.pods}||Record<-Z].
+    [{SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}||{?RECORD,SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}<-Z].
 
-read(ClusterSpec)->
+read(Object)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_spec==ClusterSpec])),
+		     X#?RECORD.spec_id==Object])),
     Result=case Z of
 	       []->
 		  [];
 	       _->
-		   [Info]=[{Record#?RECORD.cluster_spec,Record#?RECORD.cookie,
-			    Record#?RECORD.root_dir,Record#?RECORD.pods}||Record<-Z],
+		   [Info]=[{SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}||{?RECORD,SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs}<-Z],
 		   Info
 	   end,
     Result.
@@ -222,11 +227,14 @@ from_file([FileName|T],Dir,Acc)->
     NewAcc=case file:consult(FullFileName) of
 	       {error,Reason}->
 		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{cluster_spec,ClusterSpec,Info}]}->
+	       {ok,[{cluster_spec,SpecId,Info}]}->
 		   {cookie,Cookie}=lists:keyfind(cookie,1,Info),
-		   {root_dir,RootDir}=lists:keyfind(root_dir,1,Info),
-		   {pods,Pods}=lists:keyfind(pods,1,Info),
-		   case create(ClusterSpec,Cookie,RootDir,Pods) of
+		   {dir,ClusterDir}=lists:keyfind(dir,1,Info),
+		   {num_controllers,NumControllers}=lists:keyfind(num_controllers,1,Info),
+		   {controller_host_specs,ControllerHostSpecs}=lists:keyfind(controller_host_specs,1,Info),
+		   {num_workers,NumWorkers}=lists:keyfind(num_workers,1,Info),
+		   {worker_host_specs,WorkerHostSpecs}=lists:keyfind(worker_host_specs,1,Info),
+		   case create(SpecId,Cookie,ClusterDir,NumControllers,ControllerHostSpecs,NumWorkers,WorkerHostSpecs) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->

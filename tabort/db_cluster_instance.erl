@@ -5,24 +5,44 @@
 %%% @end
 %%% Created : 21 Dec 2022 by c50 <joq62@c50>
 
--module(db_cluster_spec).
+-module(db_cluster_instance).
 
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
 -import(lists, [foreach/2]).
 -include_lib("stdlib/include/qlc.hrl").
--include("db_cluster_spec.hrl").
+-include("db_cluster_instance.hrl").
 
 %% External exports
+-export([nodes/2,pod_based_host_spec/3]).
 -export([create_table/0,create_table/2,add_node/2]).
--export([create/4,delete/1]).
--export([read_all/0,read/1,read/2,get_all_id/0]).
+-export([create/7,delete/1]).
+-export([read_all/0,read/1,read/2,read/3,get_all_id/0]).
 -export([do/1]).
 -export([member/1]).
--export([git_clone_load/0]).
+-export([]).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+%% Special functions
 
+nodes(Type,ClusterSpec)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		  X#?RECORD.cluster_spec==ClusterSpec,
+		     X#?RECORD.type==Type])),
+    [X#?RECORD.pod_node||X<-Z].
+
+pod_based_host_spec(HostSpec,Type,ClusterSpec)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_spec==ClusterSpec,
+		     X#?RECORD.host_spec==HostSpec,
+		     X#?RECORD.type==Type])),
+    [X#?RECORD.pod_node||X<-Z].
+    
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
@@ -30,7 +50,8 @@
 %%--------------------------------------------------------------------
 
 create_table()->
-    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
+    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
+				 {type,bag}
 				]),
     mnesia:wait_for_tables([?TABLE], 20000).
 
@@ -38,7 +59,6 @@ create_table(NodeList,StorageType)->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
 				 {StorageType,NodeList}]),
     mnesia:wait_for_tables([?TABLE], 20000).
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
@@ -63,12 +83,16 @@ add_node(Node,StorageType)->
 %% @end
 %%--------------------------------------------------------------------
 
-create(ClusterSpec,Cookie,RootDir,Pods)->
+create(ClusterSpec,Type,PodName,PodNode,PodDir,HostSpec,Status)->
     Record=#?RECORD{
 		    cluster_spec=ClusterSpec,
-		    cookie=Cookie,
-		    root_dir=RootDir,
-		    pods=Pods
+		    type=Type,
+		    pod_name=PodName,
+		    pod_node=PodNode,
+		    pod_dir=PodDir,
+		    host_spec=HostSpec,
+		    status=Status
+
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
@@ -78,11 +102,12 @@ create(ClusterSpec,Cookie,RootDir,Pods)->
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-delete(ClusterSpec) ->
-    F = fun() ->
-                mnesia:delete({?TABLE,ClusterSpec})
 
-        end,
+delete(Object) ->
+    F = fun() -> 
+		mnesia:delete({?TABLE,Object})
+		    
+	end,
     mnesia:transaction(F).
 
 %%--------------------------------------------------------------------
@@ -102,27 +127,60 @@ member(ClusterSpec)->
 	   end,
     Member.
 
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
 
-read(Key,ClusterSpec)->
-    Return=case read(ClusterSpec) of
+read_all() ->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    Result=[{X#?RECORD.cluster_spec,X#?RECORD.type,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z],
+ 
+    Result.
+
+read(ClusterSpec)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_spec==ClusterSpec])),
+    [{X#?RECORD.cluster_spec,X#?RECORD.type,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}||X<-Z].
+ 
+read(ClusterSpec,PodNode)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_spec==ClusterSpec,
+		     X#?RECORD.pod_node==PodNode])),
+    
+   
+    Result=case Z of
 	       []->
-		   {error,[eexist,ClusterSpec,?MODULE,?LINE]};
-	       {ClusterSpec,Cookie,RootDir,Pods} ->
+		   [];
+	       [X]->
+		   {X#?RECORD.cluster_spec,X#?RECORD.type,X#?RECORD.pod_name,X#?RECORD.pod_node,X#?RECORD.pod_dir,X#?RECORD.host_spec,X#?RECORD.status}
+	   end,
+    Result.
+
+read(Key,ClusterSpec,PodNode)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.cluster_spec==ClusterSpec,
+		     X#?RECORD.pod_node==PodNode])),
+    Return=case Z of
+	       []->
+		   [];
+	       [X]->
 		   case  Key of
-		      cluster_spec->
-			   {ok,ClusterSpec};
-		       cookie->
-			   {ok,Cookie};
-		       root_dir->
-			   {ok,RootDir};
-		       pods->
-			   {ok,Pods};
+		       cluster_spec->
+			   {ok,X#?RECORD.cluster_spec};
+		       type->
+			  {ok,X#?RECORD.type};
+		       pod_name->
+			   {ok,X#?RECORD.pod_name};
+		       pod_node->
+			    {ok,X#?RECORD.pod_node};
+		       pod_dir->
+			    {ok,X#?RECORD.pod_dir};
+		       host_spec->
+			    {ok,X#?RECORD.host_spec};
+		       status->
+			   {ok,X#?RECORD.status};
 		       Err ->
 			   {error,['Key eexists',Err,ClusterSpec,?MODULE,?LINE]}
 		   end
@@ -132,26 +190,8 @@ read(Key,ClusterSpec)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [Record#?RECORD.cluster_spec||Record<-Z].
+    [ClusterSpec||{?RECORD,ClusterSpec,_ConnectNode,_PodName,_PodNode,_PodDir,_HostSpec,_Status}<-Z].
     
-read_all() ->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{Record#?RECORD.cluster_spec,Record#?RECORD.cookie,
-      Record#?RECORD.root_dir,Record#?RECORD.pods}||Record<-Z].
-
-read(ClusterSpec)->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_spec==ClusterSpec])),
-    Result=case Z of
-	       []->
-		  [];
-	       _->
-		   [Info]=[{Record#?RECORD.cluster_spec,Record#?RECORD.cookie,
-			    Record#?RECORD.root_dir,Record#?RECORD.pods}||Record<-Z],
-		   Info
-	   end,
-    Result.
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
@@ -176,66 +216,3 @@ do(Q) ->
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-
-git_clone_load()->
-    ok=create_table(),
-    Result=case git_clone() of
-	       {error,Reason}->
-		   {error,Reason};
-	       {ok,TempDirName,SpecDir}->
-		   case from_file(SpecDir) of
-		       {error,Reason}->
-			   file:del_dir_r(TempDirName),	
-			   {error,Reason};
-		       LoadResult->
-			   file:del_dir_r(TempDirName),		
-			   LoadResult
-		   end
-	   end,
-    Result.
-
-git_clone()->
-    TempDirName=erlang:integer_to_list(os:system_time(microsecond),36)++".dir",
-    ok=file:make_dir(TempDirName),
-    true=filelib:is_dir(TempDirName),
-
-    GitDir=filename:join(TempDirName,?ClusterSpecDir),
-    ok=file:make_dir(GitDir),
-    GitPath=?GitPathClusterSpecs,
-    {ok,GitResult}=cmn_appl:git_clone_to_dir(node(),GitPath,GitDir),
-     Result=case filelib:is_dir(GitDir) of
-	       false->
-		   {error,[failed_to_clone,GitPath,GitResult]};
-	       true->
-		   {ok,TempDirName,GitDir}
-	   end,
-    Result.	
-
-from_file(Dir)->
-    {ok,FileNames}=file:list_dir(Dir),
-    from_file(FileNames,Dir,[]).
-
-from_file([],_,Acc)->
-    Acc;		     
-from_file([FileName|T],Dir,Acc)->
-    FullFileName=filename:join(Dir,FileName),
-    NewAcc=case file:consult(FullFileName) of
-	       {error,Reason}->
-		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{cluster_spec,ClusterSpec,Info}]}->
-		   {cookie,Cookie}=lists:keyfind(cookie,1,Info),
-		   {root_dir,RootDir}=lists:keyfind(root_dir,1,Info),
-		   {pods,Pods}=lists:keyfind(pods,1,Info),
-		   case create(ClusterSpec,Cookie,RootDir,Pods) of
-		       {atomic,ok}->
-			   [{ok,FileName}|Acc];
-		       {error,Reason}->
-			   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc]
-		   end;
-	       {ok,NotAnApplSpecFile} -> 
-		   [{error,[not_appl_spec_file,NotAnApplSpecFile,FileName,Dir,?MODULE,?LINE]}|Acc]
-	   end,
- %   io:format("NewAcc ~p~n",[{NewAcc,?MODULE,?LINE}]),
-    from_file(T,Dir,NewAcc).
-	
-  

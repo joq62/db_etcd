@@ -4,24 +4,23 @@
 %%%
 %%% @end
 %%% Created : 21 Dec 2022 by c50 <joq62@c50>
-
--module(db_cluster_spec).
+-module(db_host_spec).
 
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
 -import(lists, [foreach/2]).
 -include_lib("stdlib/include/qlc.hrl").
--include("db_cluster_spec.hrl").
+-include("db_host_spec.hrl").
 
 %% External exports
+
 -export([create_table/0,create_table/2,add_node/2]).
--export([create/4,delete/1]).
+-export([create/7,delete/1]).
 -export([read_all/0,read/1,read/2,get_all_id/0]).
 -export([do/1]).
 -export([member/1]).
 -export([git_clone_load/0]).
-
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -38,7 +37,6 @@ create_table(NodeList,StorageType)->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
 				 {StorageType,NodeList}]),
     mnesia:wait_for_tables([?TABLE], 20000).
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
@@ -56,44 +54,45 @@ add_node(Node,StorageType)->
 		   Reason
 	   end,
     Result.
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
 
-create(ClusterSpec,Cookie,RootDir,Pods)->
+create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig)->
     Record=#?RECORD{
-		    cluster_spec=ClusterSpec,
-		    cookie=Cookie,
-		    root_dir=RootDir,
-		    pods=Pods
+		    spec_id=SpecId,
+		    hostname=HostName,
+		    local_ip=LocalIp,
+		    ssh_port=SshPort,
+		    uid=Uid,
+		    passwd=Passwd,
+		    application_config=ApplConfig
 		   },
     F = fun() -> mnesia:write(Record) end,
     mnesia:transaction(F).
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-delete(ClusterSpec) ->
-    F = fun() ->
-                mnesia:delete({?TABLE,ClusterSpec})
 
-        end,
+delete(Object) ->
+    F = fun() -> 
+		mnesia:delete({?TABLE,Object})
+		    
+	end,
     mnesia:transaction(F).
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
 
-member(ClusterSpec)->
+member(SpecId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_spec==ClusterSpec])),
+		     X#?RECORD.spec_id==SpecId])),
     Member=case Z of
 	       []->
 		   false;
@@ -102,29 +101,48 @@ member(ClusterSpec)->
 	   end,
     Member.
 
-
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
 
-read(Key,ClusterSpec)->
-    Return=case read(ClusterSpec) of
+read_all() ->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    [{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z].
+
+read(Object)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.spec_id==Object])),
+    Result=case Z of
 	       []->
-		   {error,[eexist,ClusterSpec,?MODULE,?LINE]};
-	       {ClusterSpec,Cookie,RootDir,Pods} ->
+		  [];
+	       _->
+		   [Info]=[{SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}||{?RECORD,SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig}<-Z],
+		   Info
+	   end,
+    Result.
+
+read(Key,SpecId)->
+    Return=case read(SpecId) of
+	       []->
+		   {error,[eexist,SpecId,?MODULE,?LINE]};
+	       {_SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig} ->
 		   case  Key of
-		      cluster_spec->
-			   {ok,ClusterSpec};
-		       cookie->
-			   {ok,Cookie};
-		       root_dir->
-			   {ok,RootDir};
-		       pods->
-			   {ok,Pods};
+		       hostname->
+			   {ok,HostName};
+		       local_ip->
+			   {ok,LocalIp};
+		       ssh_port->
+			   {ok,SshPort};
+		       uid->
+			   {ok,Uid};
+		       passwd->
+			   {ok,Passwd};
+		       application_config->
+			   {ok,ApplConfig};
 		       Err ->
-			   {error,['Key eexists',Err,ClusterSpec,?MODULE,?LINE]}
+			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
 		   end
 	   end,
     Return.
@@ -132,25 +150,8 @@ read(Key,ClusterSpec)->
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [Record#?RECORD.cluster_spec||Record<-Z].
+    [SpecId||{?RECORD,SpecId,_HostName,_LocalIp,_SshPort,_Uid,_Passwd,_ApplConfig}<-Z].
     
-read_all() ->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{Record#?RECORD.cluster_spec,Record#?RECORD.cookie,
-      Record#?RECORD.root_dir,Record#?RECORD.pods}||Record<-Z].
-
-read(ClusterSpec)->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.cluster_spec==ClusterSpec])),
-    Result=case Z of
-	       []->
-		  [];
-	       _->
-		   [Info]=[{Record#?RECORD.cluster_spec,Record#?RECORD.cookie,
-			    Record#?RECORD.root_dir,Record#?RECORD.pods}||Record<-Z],
-		   Info
-	   end,
-    Result.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -185,35 +186,45 @@ git_clone_load()->
 	       {ok,TempDirName,SpecDir}->
 		   case from_file(SpecDir) of
 		       {error,Reason}->
-			   file:del_dir_r(TempDirName),	
+			   os:cmd("rm -rf "++TempDirName),	
 			   {error,Reason};
 		       LoadResult->
-			   file:del_dir_r(TempDirName),		
+			   os:cmd("rm -rf "++TempDirName),	
 			   LoadResult
 		   end
 	   end,
     Result.
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
 
 git_clone()->
     TempDirName=erlang:integer_to_list(os:system_time(microsecond),36)++".dir",
     ok=file:make_dir(TempDirName),
-    true=filelib:is_dir(TempDirName),
-
-    GitDir=filename:join(TempDirName,?ClusterSpecDir),
+    GitDir=filename:join(TempDirName,?HostSpecDir),
+    GitPath=?GitPathHostSpecs,
+    os:cmd("rm -rf "++GitDir),    
     ok=file:make_dir(GitDir),
-    GitPath=?GitPathClusterSpecs,
-    {ok,GitResult}=cmn_appl:git_clone_to_dir(node(),GitPath,GitDir),
-     Result=case filelib:is_dir(GitDir) of
+    GitResult=cmn_appl:git_clone_to_dir(node(),GitPath,GitDir),
+    Result=case filelib:is_dir(GitDir) of
 	       false->
 		   {error,[failed_to_clone,GitPath,GitResult]};
 	       true->
 		   {ok,TempDirName,GitDir}
 	   end,
-    Result.	
+    Result.
 
-from_file(Dir)->
-    {ok,FileNames}=file:list_dir(Dir),
-    from_file(FileNames,Dir,[]).
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+
+from_file(ApplSpecDir)->
+    {ok,FileNames}=file:list_dir(ApplSpecDir),
+    from_file(FileNames,ApplSpecDir,[]).
 
 from_file([],_,Acc)->
     Acc;		     
@@ -222,11 +233,16 @@ from_file([FileName|T],Dir,Acc)->
     NewAcc=case file:consult(FullFileName) of
 	       {error,Reason}->
 		   [{error,[Reason,FileName,Dir,?MODULE,?LINE]}|Acc];
-	       {ok,[{cluster_spec,ClusterSpec,Info}]}->
-		   {cookie,Cookie}=lists:keyfind(cookie,1,Info),
-		   {root_dir,RootDir}=lists:keyfind(root_dir,1,Info),
-		   {pods,Pods}=lists:keyfind(pods,1,Info),
-		   case create(ClusterSpec,Cookie,RootDir,Pods) of
+	       {ok,[{host_spec,SpecId,Info}]}->
+		   {hostname,HostName}=lists:keyfind(hostname,1,Info),
+		   {local_ip,LocalIp}=lists:keyfind(local_ip,1,Info),
+		   {ssh_port,SshPort}=lists:keyfind(ssh_port,1,Info),
+		   {uid,Uid}=lists:keyfind(uid,1,Info),
+		   {passwd,Passwd}=lists:keyfind(passwd,1,Info),
+		   {application_config,ApplConfig}=lists:keyfind(application_config,1,Info),
+		 
+		 
+		   case create(SpecId,HostName,LocalIp,SshPort,Uid,Passwd,ApplConfig) of
 		       {atomic,ok}->
 			   [{ok,FileName}|Acc];
 		       {error,Reason}->
@@ -235,7 +251,5 @@ from_file([FileName|T],Dir,Acc)->
 	       {ok,NotAnApplSpecFile} -> 
 		   [{error,[not_appl_spec_file,NotAnApplSpecFile,FileName,Dir,?MODULE,?LINE]}|Acc]
 	   end,
- %   io:format("NewAcc ~p~n",[{NewAcc,?MODULE,?LINE}]),
     from_file(T,Dir,NewAcc).
-	
-  
+			   
