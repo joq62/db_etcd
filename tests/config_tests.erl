@@ -41,20 +41,20 @@ start()->
 unit_1_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     
-    []=lists:sort(db_config:get_all()),
+    [{key_dummy,value_dummy}]=lists:sort(db_config:get_all()),
     {atomic,ok}=db_config:set(key1,value1),
-    [{key1,value1}]=lists:sort(db_config:get_all()),
+    [{key1,value1},{key_dummy,value_dummy}]=lists:sort(db_config:get_all()),
     {atomic,ok}=db_config:set(key2,value1),
-    [{key1,value1},{key2,value1}]=lists:sort(db_config:get_all()),
+    [{key1,value1},{key2,value1},{key_dummy,value_dummy}]=lists:sort(db_config:get_all()),
     value1=db_config:get(key1),
     value1=db_config:get(key2),
     {atomic,ok}=db_config:set(key1,value2),
-    [{key1,value2},{key2,value1}]=lists:sort(db_config:get_all()),
+    [{key1,value2},{key2,value1},{key_dummy,value_dummy}]=lists:sort(db_config:get_all()),
     value2=db_config:get(key1),
     value1=db_config:get(key2),
 
     {atomic,ok}=db_config:delete(key1),
-    [{key2,value1}]=lists:sort(db_config:get_all()),
+    [{key2,value1},{key_dummy,value_dummy}]=lists:sort(db_config:get_all()),
      ok.
 
 %% --------------------------------------------------------------------
