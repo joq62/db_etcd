@@ -74,6 +74,6 @@ setup()->
     pong=rd:ping(),
     ok=application:start(db_etcd),
     pong=db_etcd:ping(),
-    glurk=db_etcd:install(),
+    ok=db_etcd:install(),
     
     ok.
