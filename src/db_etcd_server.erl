@@ -179,8 +179,7 @@ do_install()->
     ok=db_appl_instance:create_table(),
     
     ok=db_config:create_table(),
-    {atomic,ok}=db_config:set(key_dummy,value_dummy),
- 
+   
     Test=lists:append([Ok_ClusterSpec,Ok_HostSpec,Ok_ApplSpec,Ok_ApplDeployment,
 		       Err_ClusterSpec,Err_HostSpec,Err_ApplSpec,Err_ApplDeployment]),
 		       

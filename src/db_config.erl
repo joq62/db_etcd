@@ -31,8 +31,8 @@
 
 create_table()->
     mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
-				 {type,set},
-				 {ram_copies,[]}
+				 {type,set}
+				
 				]),
     mnesia:wait_for_tables([?TABLE], 2*20000).
 
