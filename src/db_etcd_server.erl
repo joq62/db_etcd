@@ -179,7 +179,8 @@ do_install()->
     ok=db_appl_instance:create_table(),
     
     ok=db_config:create_table(),
-    
+    []=db_config:get_all(),
+
     Test=lists:append([Ok_ClusterSpec,Ok_HostSpec,Ok_ApplSpec,Ok_ApplDeployment,
 		       Err_ClusterSpec,Err_HostSpec,Err_ApplSpec,Err_ApplDeployment]),
 		       
