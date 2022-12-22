@@ -66,7 +66,10 @@ start()->
 
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    
+    ok=application:start(common),
+    pong=common:ping(),
+    ok=application:start(resource_discovery),
+    pong=rd:ping(),
     ok=application:start(db_etcd),
     pong=db_etcd:ping(),
     
