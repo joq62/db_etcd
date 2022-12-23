@@ -154,26 +154,26 @@ code_change(_OldVsn, State, _Extra) ->
 %% --------------------------------------------------------------------
 do_install()->
     ok=db_cluster_spec:create_table(),
-    ClusterSpec=db_cluster_spec:git_clone_load(),
-    Ok_ClusterSpec=[X||{ok,X}<-ClusterSpec],
-    Err_ClusterSpec=[X||{error,X}<-ClusterSpec],
+    ClusterSpecList=db_cluster_spec:git_clone_load(),
+    Ok_ClusterSpec=[X||{ok,X}<-ClusterSpecList],
+    Err_ClusterSpec=[X||{error,X}<-ClusterSpecList],
   
     ok=db_host_spec:create_table(),
-    HostSpec=db_host_spec:git_clone_load(),
-    Ok_HostSpec=[X||{ok,X}<-HostSpec],
-    Err_HostSpec=[X||{error,X}<-HostSpec],
+    HostSpecList=db_host_spec:git_clone_load(),
+    Ok_HostSpec=[X||{ok,X}<-HostSpecList],
+    Err_HostSpec=[X||{error,X}<-HostSpecList],
 
     ok=db_cluster_instance:create_table(),
 
     ok=db_appl_spec:create_table(),
-    ApplSpec=db_appl_spec:git_clone_load(),
-    Ok_ApplSpec=[X||{ok,X}<-ApplSpec],
-    Err_ApplSpec=[X||{error,X}<-ApplSpec],
+    ApplSpecList=db_appl_spec:git_clone_load(),
+    Ok_ApplSpec=[X||{ok,X}<-ApplSpecList],
+    Err_ApplSpec=[X||{error,X}<-ApplSpecList],
 
     ok=db_appl_deployment:create_table(),
-    ApplDeployment=db_appl_deployment:git_clone_load(),
-    Ok_ApplDeployment=[X||{ok,X}<-ApplDeployment],
-    Err_ApplDeployment=[X||{error,X}<-ApplDeployment],
+    ApplDeploymentList=db_appl_deployment:git_clone_load(),
+    Ok_ApplDeployment=[X||{ok,X}<-ApplDeploymentList],
+    Err_ApplDeployment=[X||{error,X}<-ApplDeploymentList],
 
     ok=db_appl_instance:create_table(),
     
