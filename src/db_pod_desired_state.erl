@@ -62,13 +62,13 @@ add_node(Node,StorageType)->
 %% @end
 %%--------------------------------------------------------------------
 
-create(ParentNode,NodeName,PodDir,PaArgs,CommonFunsPaArgs,EnvArgs)->
+create(PodNode,NodeName,PodDir,ParentNode,PaArgsList,EnvArgs)->
     Record=#?RECORD{
-		    parent_node=ParentNode,
+		    pod_node=PodNode,
 		    node_name=NodeName,
 		    pod_dir=PodDir,
-		    pa_args=PaArgs,
-		    common_funs_pa_args=CommonFunsPaArgs,
+		    parent_node=ParentNode,
+		    pa_args_list=PaArgsList,
 		    env_args=EnvArgs		   
 		   },
     F = fun() -> mnesia:write(Record) end,
@@ -110,30 +110,31 @@ member(PodNode)->
 %%--------------------------------------------------------------------
 
 read(Key,PodNode)->
-    Return=case read(PodNode) of
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.pod_node==PodNode])),
+    Result=case Z of
 	       []->
-		   {error,[eexist,PodNode,?MODULE,?LINE]};
-	       {PodNode,NodeName,PodDir,ParentNode,PaArgs,CommonFunsPaArgs,EnvArgs} ->
-		   case  Key of
+		   {error,["PodNode doesnt exists",PodNode,?MODULE,?LINE]};
+	      [Record]->
+		   
+    		   case  Key of
 		       pod_node->
-			   {ok,PodNode};
+			   {ok,Record#?RECORD.pod_node};
 		       node_name->
-			   {ok,NodeName};
+			   {ok,Record#?RECORD.node_name};
 		       pod_dir->
-			   {ok,PodDir};
-		      parent_node->
-			   {ok,ParentNode};
-		       pa_args->
-			   {ok,PaArgs};
-		       common_funs_pa_args->
-			   {ok,CommonFunsPaArgs};
+			   {ok,Record#?RECORD.pod_dir};
+		       parent_node->
+			   {ok,Record#?RECORD.parent_node};
+		       pa_args_list->
+			   {ok,Record#?RECORD.pa_args_list};
 		       env_args->
-			   {ok,EnvArgs};
+			   {ok,Record#?RECORD.env_args};
 		       Err ->
 			   {error,['Key eexists',Err,PodNode,?MODULE,?LINE]}
 		   end
 	   end,
-    Return.
+    Result.
 
 
 get_all_id()->
@@ -143,18 +144,17 @@ get_all_id()->
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
     [{R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
-      R#?RECORD.pa_args,R#?RECORD.common_funs_pa_args,R#?RECORD.env_args}||R<-Z].
+      R#?RECORD.pa_args_list,R#?RECORD.env_args}||R<-Z].
 
-read(ParentNode)->
+read(PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.parent_node==ParentNode])),
+		     X#?RECORD.pod_node==PodNode])),
     Result=case Z of
 	       []->
 		  [];
-	       _->
-		   [Info]=[{R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
-			    R#?RECORD.pa_args,R#?RECORD.common_funs_pa_args,R#?RECORD.env_args}||R<-Z],
-		   Info
+	      [R]->
+		   {R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
+		     R#?RECORD.pa_args_list,R#?RECORD.env_args}
 	   end,
     Result.
 

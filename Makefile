@@ -55,7 +55,8 @@ eunit:
 	rm -rf common resource_discovery nodelog;
 #	tests 
 	mkdir tests_ebin;
-	erlc -o tests_ebin ../infra_service/src/lib_parent.erl; 
+	erlc -o tests_ebin ../infra_service/src/lib_parent.erl;
+	erlc -o tests_ebin ../infra_service/src/lib_pod.erl; 
 	erlc -I include -o tests_ebin tests/*.erl;
 #  	dependencies
 	rm -rf common;
