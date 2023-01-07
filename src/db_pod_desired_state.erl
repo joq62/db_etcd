@@ -15,11 +15,11 @@
 
 %% External exports
 -export([create_table/0,create_table/2,add_node/2]).
--export([create/6,delete/1]).
+-export([create/8,delete/1]).
 -export([read_all/0,read/1,read/2,get_all_id/0]).
 -export([do/1]).
 -export([member/1]).
--export([]).
+-export([add_appl_list/2,delete_appl_list/2]).
 
 
 %%--------------------------------------------------------------------
@@ -62,12 +62,14 @@ add_node(Node,StorageType)->
 %% @end
 %%--------------------------------------------------------------------
 
-create(PodNode,NodeName,PodDir,ParentNode,PaArgsList,EnvArgs)->
+create(PodNode,NodeName,PodDir,ParentNode,ApplSpecList,HostSpec,PaArgsList,EnvArgs)->
     Record=#?RECORD{
 		    pod_node=PodNode,
 		    node_name=NodeName,
 		    pod_dir=PodDir,
 		    parent_node=ParentNode,
+		    appl_spec_list=ApplSpecList,
+		    host_spec=HostSpec,
 		    pa_args_list=PaArgsList,
 		    env_args=EnvArgs		   
 		   },
@@ -126,6 +128,10 @@ read(Key,PodNode)->
 			   {ok,Record#?RECORD.pod_dir};
 		       parent_node->
 			   {ok,Record#?RECORD.parent_node};
+		       appl_spec_list->
+			   {ok,Record#?RECORD.appl_spec_list};
+		       host_spec->
+			   {ok,Record#?RECORD.host_spec};
 		       pa_args_list->
 			   {ok,Record#?RECORD.pa_args_list};
 		       env_args->
@@ -144,7 +150,7 @@ get_all_id()->
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
     [{R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
-      R#?RECORD.pa_args_list,R#?RECORD.env_args}||R<-Z].
+      R#?RECORD.appl_spec_list,R#?RECORD.host_spec,R#?RECORD.pa_args_list,R#?RECORD.env_args}||R<-Z].
 
 read(PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -152,11 +158,58 @@ read(PodNode)->
     Result=case Z of
 	       []->
 		  [];
-	      [R]->
-		   {R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
-		     R#?RECORD.pa_args_list,R#?RECORD.env_args}
+	       [R]->
+		{R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
+		 R#?RECORD.appl_spec_list,R#?RECORD.host_spec,R#?RECORD.pa_args_list,R#?RECORD.env_args}
 	   end,
     Result.
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+add_appl_list(NewApplSpec,PodNode)->
+    F = fun() ->
+                Z=do(qlc:q([X || X <- mnesia:table(?TABLE),
+                                 X#?RECORD.pod_node==PodNode])),
+                case Z of
+                    [] ->
+			mnesia:abort({error,["PodNode not exists ",PodNode]});
+		    [R]->
+			case lists:member(NewApplSpec,R#?RECORD.appl_spec_list) of
+			    true->
+				mnesia:abort({error,["ApplSpec already added to PodNode  ",NewApplSpec,PodNode]});
+			    false->
+				NewRecord=R#?RECORD{appl_spec_list=[NewApplSpec|lists:delete(NewApplSpec,R#?RECORD.appl_spec_list)]},
+				mnesia:write(NewRecord)
+			end
+                end
+        end,
+    mnesia:transaction(F).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+delete_appl_list(DeleteApplSpec,PodNode)->
+    F = fun() ->
+                Z=do(qlc:q([X || X <- mnesia:table(?TABLE),
+                                 X#?RECORD.pod_node==PodNode])),
+                case Z of
+                    [] ->
+			mnesia:abort({error,["ERROR: PodNode not exists ",PodNode]});
+		    [R]->
+			case lists:member(DeleteApplSpec,R#?RECORD.appl_spec_list) of
+			    false->
+				mnesia:abort({error,["ERROR: ApplSpec already removed to PodNode  ",DeleteApplSpec,PodNode]});
+			    true->
+				NewRecord=R#?RECORD{appl_spec_list=lists:delete(DeleteApplSpec,R#?RECORD.appl_spec_list)},
+				mnesia:write(NewRecord)
+			end
+                end
+        end,
+    mnesia:transaction(F).
 
 %%--------------------------------------------------------------------
 %% @doc

@@ -5,6 +5,8 @@
 		 node_name,
 		 pod_dir,
 		 parent_node,
+		 appl_spec_list,
+		 host_spec,
 		 pa_args_list,
 		 env_args
 		 

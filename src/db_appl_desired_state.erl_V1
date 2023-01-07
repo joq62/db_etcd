@@ -21,7 +21,15 @@
 -export([member/1]).
 -export([]).
 
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+num_appl_on_node(PodNode)->
+    
 
+    
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
@@ -29,8 +37,8 @@
 %%--------------------------------------------------------------------
 
 create_table()->
-    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)}
-				]),
+    mnesia:create_table(?TABLE, [{attributes, record_info(fields, ?RECORD)},
+				 {type,bag}]),
     mnesia:wait_for_tables([?TABLE], 20000).
 
 create_table(NodeList,StorageType)->

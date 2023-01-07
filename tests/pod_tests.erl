@@ -28,9 +28,52 @@ start()->
     ok=setup(),
     ok=create_wanted_stat_test(),
     ok=read_tests(),
-  
+    ok=add_delete_appls_test(),
+
     io:format("Stop OK !!! ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
+    ok.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+
+add_delete_appls_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    {ok,DesiredNodes}=lib_pod:desired_nodes(),
+    SortedDesiredNodes=lists:sort(DesiredNodes),
+    [Pod1|_]=SortedDesiredNodes,
+    Pod1='1_c200_c201_pod@c200',
+    %---
+    {ok,[]}=db_pod_desired_state:read(appl_spec_list,Pod1),
+    []=[Pod||Pod<-SortedDesiredNodes,
+	     {ok,[]}/=db_pod_desired_state:read(appl_spec_list,Pod)],
+
+    %
+    {atomic,ok}=db_pod_desired_state:add_appl_list(appl_spec_1,Pod1),
+    {ok,AppSpec1}=db_pod_desired_state:read(appl_spec_list,Pod1),
+    [appl_spec_1]=AppSpec1,
+
+    {atomic,ok}=db_pod_desired_state:add_appl_list(appl_spec_2,Pod1),
+    {atomic,ok}=db_pod_desired_state:add_appl_list(appl_spec_3,Pod1),
+    {ok,AppSpec2}=db_pod_desired_state:read(appl_spec_list,Pod1),
+    [appl_spec_1,appl_spec_2,appl_spec_3]=lists:sort(AppSpec2),
+
+    [Pod1]=[Pod||Pod<-SortedDesiredNodes,
+	   {ok,[]}/=db_pod_desired_state:read(appl_spec_list,Pod)],
+
+    {atomic,ok}=db_pod_desired_state:delete_appl_list(appl_spec_2,Pod1),
+    {ok,AppSpec3}=db_pod_desired_state:read(appl_spec_list,Pod1),
+    [appl_spec_1,appl_spec_3]=lists:sort(AppSpec3),
+
+    {atomic,ok}=db_pod_desired_state:delete_appl_list(appl_spec_1,Pod1),
+    {aborted,{error,["ERROR: ApplSpec already removed to PodNode  ",appl_spec_1,'1_c200_c201_pod@c200']}}=db_pod_desired_state:delete_appl_list(appl_spec_1,Pod1),
+    {atomic,ok}=db_pod_desired_state:delete_appl_list(appl_spec_3,Pod1),
+    {ok,[]}=db_pod_desired_state:read(appl_spec_list,Pod1),
+
+    
     ok.
 
 
@@ -41,32 +84,24 @@ start()->
 %% --------------------------------------------------------------------
 read_tests()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),    
-    
-    [
-     '1_c200_c201_pod@c200','1_c200_c201_pod@c201','1_c200_pod@c200','1_c201_pod@c201',
-     '2_c200_c201_pod@c200','2_c200_c201_pod@c201','2_c200_pod@c200','2_c201_pod@c201',
-     '3_c200_c201_pod@c200','3_c200_c201_pod@c201','3_c200_pod@c200','3_c201_pod@c201',
-     '4_c200_c201_pod@c200','4_c200_c201_pod@c201',
-     '5_c200_c201_pod@c200','5_c200_c201_pod@c201',
-     '6_c200_c201_pod@c200','6_c200_c201_pod@c201'
-    ]=lists:sort(db_pod_desired_state:get_all_id()),
-
-    Pod='1_c200_c201_pod@c200',
+   {ok,DesiredNodes}=lib_pod:desired_nodes(), 
+    SortedDesiredNodes=lists:sort(DesiredNodes),
+    [Pod1|_]=SortedDesiredNodes,
 
     {
      '1_c200_c201_pod@c200',"1_c200_c201_pod","c200_c201/1_c200_c201_pod",
-     'c200_c201_parent@c200',[]," "
-    }=db_pod_desired_state:read(Pod),
-    
-    {ok,Pod}=db_pod_desired_state:read(pod_node,Pod),
-    {ok,"1_c200_c201_pod"}=db_pod_desired_state:read(node_name,Pod),
-    {ok,"c200_c201/1_c200_c201_pod"}=db_pod_desired_state:read(pod_dir,Pod),
-    {ok,'c200_c201_parent@c200'}=db_pod_desired_state:read(parent_node,Pod),
-    {ok,[]}=db_pod_desired_state:read(pa_args_list,Pod),
-    {ok," "}=db_pod_desired_state:read(env_args,Pod),
-    
-    
-
+     'c200_c201_parent@c200',[],"c200",[]," "
+    }=db_pod_desired_state:read(Pod1),
+   
+    {ok,'1_c200_c201_pod@c200'}=db_pod_desired_state:read(pod_node,Pod1),
+    {ok,"1_c200_c201_pod"}=db_pod_desired_state:read(node_name,Pod1),
+    {ok,"c200_c201/1_c200_c201_pod"}=db_pod_desired_state:read(pod_dir,Pod1),
+    {ok,'c200_c201_parent@c200'}=db_pod_desired_state:read(parent_node,Pod1),
+    {ok,[]}=db_pod_desired_state:read( appl_spec_list,Pod1),
+    {ok,"c200"}=db_pod_desired_state:read(host_spec,Pod1),
+    {ok,[]}=db_pod_desired_state:read(pa_args_list,Pod1),
+    {ok," "}=db_pod_desired_state:read(env_args,Pod1),
+  
     ok.
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
