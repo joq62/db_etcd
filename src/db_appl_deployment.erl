@@ -10,7 +10,6 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--import(lists, [foreach/2]).
 -include_lib("stdlib/include/qlc.hrl").
 -include("db_appl_deployment.hrl").
 %% External exports
@@ -108,46 +107,50 @@ member(SpecId)->
     
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [{SpecId,ApplSpec,Vsn,ClusterSpec,NumInstances,Affinity}||{?RECORD,SpecId,ApplSpec,Vsn,ClusterSpec,NumInstances,Affinity}<-Z].
+    [{R#?RECORD.spec_id,R#?RECORD.appl_spec,R#?RECORD.vsn,R#?RECORD.cluster_spec,R#?RECORD.num_instances,R#?RECORD.affinity}||R<-Z].
 
-read(Object)->
+read(SpecId)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
-		     X#?RECORD.spec_id==Object])),
+		     X#?RECORD.spec_id==SpecId])),
     Result=case Z of
 	       []->
-		  [];
-	       _->
-		   [Info]=[{SpecId,ApplSpec,Vsn,ClusterSpec,NumInstances,Affinity}||{?RECORD,SpecId,ApplSpec,Vsn,ClusterSpec,NumInstances,Affinity}<-Z],
-		   Info
+		   [];
+	       [R]->
+		   {R#?RECORD.spec_id,R#?RECORD.appl_spec,R#?RECORD.vsn,R#?RECORD.cluster_spec,R#?RECORD.num_instances,R#?RECORD.affinity}
 	   end,
     Result.
 
 read(Key,SpecId)->
-    Return=case read(SpecId) of
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
+		     X#?RECORD.spec_id==SpecId])),
+    Result=case Z of
 	       []->
 		   {error,[eexist,SpecId,?MODULE,?LINE]};
-	       {_SpecId,ApplSpec,Vsn,ClusterSpec,NumInstances,Affinity} ->
+	       [R]->
 		   case  Key of
+		       spec_id->
+			   {ok,R#?RECORD.spec_id};
 		       appl_spec->
-			   {ok,ApplSpec};
+			   {ok,R#?RECORD.appl_spec};
 		       vsn->
-			   {ok,Vsn};
+			   {ok,R#?RECORD.vsn};
 		       cluster_spec->
-			   {ok,ClusterSpec};
+			   {ok,R#?RECORD.cluster_spec};
 		       num_instances->
-			   {ok,NumInstances};
+			   {ok,R#?RECORD.num_instances};
 		       affinity->
-			   {ok,Affinity};
+			   {ok,R#?RECORD.affinity};
 		       Err ->
 			   {error,['Key eexists',Err,SpecId,?MODULE,?LINE]}
-		   end
+		   end		   
 	   end,
-    Return.
+    Result.
+   
 
 
 get_all_id()->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    [SpecId||{?RECORD,SpecId,_ApplSpec,_Vsn,_ClusterSpec,_NumInstances,_Affinity}<-Z].
+    [R#?RECORD.spec_id||R<-Z].
 
 
 %%--------------------------------------------------------------------
