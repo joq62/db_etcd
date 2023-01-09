@@ -35,6 +35,7 @@ start(_Args)->
     ok=host_spec_tests:start(),
     ok=parents_tests:start(),
     ok=pod_tests:start(),
+    ok=appl_tests:start(),
     
 
  

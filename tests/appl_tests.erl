@@ -9,7 +9,7 @@
 %%% Pod consits beams from all services, app and app and sup erl.
 %%% The setup of envs is
 %%% -------------------------------------------------------------------
--module(pod_tests).      
+-module(appl_tests).      
  
 -export([start/0]).
 %% --------------------------------------------------------------------
@@ -84,23 +84,7 @@ add_delete_appls_test()->
 %% --------------------------------------------------------------------
 read_tests()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),    
-   {ok,DesiredNodes}=lib_pod:desired_nodes(), 
-    SortedDesiredNodes=lists:sort(DesiredNodes),
-    [Pod1|_]=SortedDesiredNodes,
-
-    {
-     '1_c200_c201_pod@c200',"1_c200_c201_pod","c200_c201/1_c200_c201_pod",
-     'c200_c201_parent@c200',[],"c200",[]," "
-    }=db_pod_desired_state:read(Pod1),
-   
-    {ok,'1_c200_c201_pod@c200'}=db_pod_desired_state:read(pod_node,Pod1),
-    {ok,"1_c200_c201_pod"}=db_pod_desired_state:read(node_name,Pod1),
-    {ok,"c200_c201/1_c200_c201_pod"}=db_pod_desired_state:read(pod_dir,Pod1),
-    {ok,'c200_c201_parent@c200'}=db_pod_desired_state:read(parent_node,Pod1),
-    {ok,[]}=db_pod_desired_state:read( appl_spec_list,Pod1),
-    {ok,"c200"}=db_pod_desired_state:read(host_spec,Pod1),
-    {ok,[]}=db_pod_desired_state:read(pa_args_list,Pod1),
-    {ok," "}=db_pod_desired_state:read(env_args,Pod1),
+ 
   
     ok.
 %% --------------------------------------------------------------------
@@ -112,14 +96,19 @@ create_wanted_stat_test()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
    
     %% Parent desired state is pre-requesite for pod waned state 
-    AllClusterSpecs=db_cluster_spec:get_all_id(),
-    ok=db_parent_desired_state:create_table(),
-    []=[{error,Reason}||{error,Reason}<-[lib_parent:load_desired_state(ClusterSpec)||ClusterSpec<-AllClusterSpecs]],
+    AllClusterSpecs=lists:sort(db_cluster_spec:get_all_id()),
+ 
 
-    %% Create Pod
-    ok=db_pod_desired_state:create_table(),
-    R=[lib_pod:load_desired_state(ClusterSpec)||ClusterSpec<-AllClusterSpecs],
+    {ok,_}=pod_server:start(),
+    pong=pod_server:ping(),
+    R=[{ClusterSpec,pod_server:load_desired_state(ClusterSpec)}||ClusterSpec<-AllClusterSpecs,
+								 ClusterSpec=="c200_c201"],
+    io:format("R ~p~n",[{R,?MODULE,?FUNCTION_NAME}]),
+    
+    %% Create appl
+    R=[lib_appl:load_desired_state(ClusterSpec)||ClusterSpec<-AllClusterSpecs],
     []=[{error,Reason}||{error,Reason}<-R],
+
 
     ok.
 
@@ -139,7 +128,6 @@ create_wanted_stat_test()->
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
        
-  
     pong=db_etcd:ping(),
     
     ok.
