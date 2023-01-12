@@ -90,7 +90,7 @@ read_tests()->
 
     {
      '1_c200_c201_pod@c200',"1_c200_c201_pod","c200_c201/1_c200_c201_pod",
-     'c200_c201_parent@c200',[],"c200",[]," "
+     'c200_c201_parent@c200',[],"c200_c201","c200",[]," "
     }=db_pod_desired_state:read(Pod1),
    
     {ok,'1_c200_c201_pod@c200'}=db_pod_desired_state:read(pod_node,Pod1),
@@ -98,6 +98,7 @@ read_tests()->
     {ok,"c200_c201/1_c200_c201_pod"}=db_pod_desired_state:read(pod_dir,Pod1),
     {ok,'c200_c201_parent@c200'}=db_pod_desired_state:read(parent_node,Pod1),
     {ok,[]}=db_pod_desired_state:read( appl_spec_list,Pod1),
+    {ok,"c200_c201"}=db_pod_desired_state:read(cluster_spec,Pod1),
     {ok,"c200"}=db_pod_desired_state:read(host_spec,Pod1),
     {ok,[]}=db_pod_desired_state:read(pa_args_list,Pod1),
     {ok," "}=db_pod_desired_state:read(env_args,Pod1),

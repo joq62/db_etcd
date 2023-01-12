@@ -6,6 +6,7 @@
 		 pod_dir,
 		 parent_node,
 		 appl_spec_list,
+		 cluster_spec,
 		 host_spec,
 		 pa_args_list,
 		 env_args

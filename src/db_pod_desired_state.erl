@@ -15,7 +15,7 @@
 
 %% External exports
 -export([create_table/0,create_table/2,add_node/2]).
--export([create/8,delete/1]).
+-export([create/9,delete/1]).
 -export([read_all/0,read/1,read/2,get_all_id/0]).
 -export([do/1]).
 -export([member/1]).
@@ -62,13 +62,14 @@ add_node(Node,StorageType)->
 %% @end
 %%--------------------------------------------------------------------
 
-create(PodNode,NodeName,PodDir,ParentNode,ApplSpecList,HostSpec,PaArgsList,EnvArgs)->
+create(PodNode,NodeName,PodDir,ParentNode,ApplSpecList,ClusterSpec,HostSpec,PaArgsList,EnvArgs)->
     Record=#?RECORD{
 		    pod_node=PodNode,
 		    node_name=NodeName,
 		    pod_dir=PodDir,
 		    parent_node=ParentNode,
 		    appl_spec_list=ApplSpecList,
+		    cluster_spec=ClusterSpec,
 		    host_spec=HostSpec,
 		    pa_args_list=PaArgsList,
 		    env_args=EnvArgs		   
@@ -130,6 +131,8 @@ read(Key,PodNode)->
 			   {ok,Record#?RECORD.parent_node};
 		       appl_spec_list->
 			   {ok,Record#?RECORD.appl_spec_list};
+		       cluster_spec->
+			   {ok,Record#?RECORD.cluster_spec};		       
 		       host_spec->
 			   {ok,Record#?RECORD.host_spec};
 		       pa_args_list->
@@ -150,7 +153,7 @@ get_all_id()->
 read_all() ->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
     [{R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
-      R#?RECORD.appl_spec_list,R#?RECORD.host_spec,R#?RECORD.pa_args_list,R#?RECORD.env_args}||R<-Z].
+      R#?RECORD.appl_spec_list,R#?RECORD.cluster_spec,R#?RECORD.host_spec,R#?RECORD.pa_args_list,R#?RECORD.env_args}||R<-Z].
 
 read(PodNode)->
     Z=do(qlc:q([X || X <- mnesia:table(?TABLE),		
@@ -160,7 +163,7 @@ read(PodNode)->
 		  [];
 	       [R]->
 		{R#?RECORD.pod_node,R#?RECORD.node_name,R#?RECORD.pod_dir,R#?RECORD.parent_node,
-		 R#?RECORD.appl_spec_list,R#?RECORD.host_spec,R#?RECORD.pa_args_list,R#?RECORD.env_args}
+		 R#?RECORD.appl_spec_list,R#?RECORD.cluster_spec,R#?RECORD.host_spec,R#?RECORD.pa_args_list,R#?RECORD.env_args}
 	   end,
     Result.
 %%--------------------------------------------------------------------
