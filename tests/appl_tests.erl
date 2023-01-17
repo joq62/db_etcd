@@ -53,6 +53,7 @@ add_delete_appls_test()->
 read_tests()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),    
  
+    kuk=db_appl_deployment:get_all_id(),
   
     ok.
 %% --------------------------------------------------------------------

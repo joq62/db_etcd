@@ -12,7 +12,7 @@
 %% --------------------------------------------------------------------
 -export([
 	
-	 install/0,
+	 config/0,
 	 ping/0
 
 	]).
@@ -32,9 +32,9 @@
 ping() ->
     gen_server:call(?SERVER, {ping}).
 
-install()->
+config()->
  %   io:format("DEBUG  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-    gen_server:call(?SERVER, {install}).
+    gen_server:call(?SERVER, {config}).
     
 
 

@@ -76,6 +76,6 @@ setup()->
     pong=rd:ping(),
     ok=application:start(db_etcd),
     pong=db_etcd:ping(),
-    ok=db_etcd:install(),
+    ok=db_etcd:config(),
     
     ok.
