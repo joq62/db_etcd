@@ -82,6 +82,10 @@ init([]) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 
+handle_call({is_config},_From, State) ->
+    Reply=State#state.is_config,
+    {reply, Reply, State};
+
 handle_call({config},_From, State) ->
     Reply=case State#state.is_config of
 	      false->

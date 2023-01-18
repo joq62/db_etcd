@@ -11,7 +11,7 @@
 %% Internal exports
 %% --------------------------------------------------------------------
 -export([
-	
+	 is_config/0,
 	 config/0,
 	 ping/0
 
@@ -29,13 +29,16 @@
 %% --------------------------------------------------------------------
 %% API Functions
 %% --------------------------------------------------------------------
-ping() ->
-    gen_server:call(?SERVER, {ping}).
 
+is_config()->
+ %   io:format("DEBUG  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    gen_server:call(?SERVER, {is_config}).
 config()->
  %   io:format("DEBUG  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
     gen_server:call(?SERVER, {config}).
     
+ping() ->
+    gen_server:call(?SERVER, {ping}).
 
 
 
