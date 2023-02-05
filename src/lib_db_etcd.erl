@@ -190,9 +190,11 @@ config()->
     Ok_ApplDeployment=[X||{ok,X}<-ApplDeploymentList],
     Err_ApplDeployment=[X||{error,X}<-ApplDeploymentList],
 
-    ok=db_appl_instance:create_table(),
-    
-    ok=db_config:create_table(),
+    ok=db_parent_desired_state:create_table(),
+    ok=db_pod_desired_state:create_table(),
+    % to be removed
+    %ok=db_appl_instance:create_table(),
+   % ok=db_config:create_table(),
    
     Test=lists:append([Ok_ClusterSpec,Ok_HostSpec,Ok_ApplSpec,Ok_ApplDeployment,
 		       Err_ClusterSpec,Err_HostSpec,Err_ApplSpec,Err_ApplDeployment]),
