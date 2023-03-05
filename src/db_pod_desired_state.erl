@@ -112,14 +112,40 @@ member(PodNode)->
 %% @end
 %%--------------------------------------------------------------------
 % ApplList {PodNode,ApplSpec,App}
-get_pods_based_app(App)->
-    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
-    PodsApp=[R#?RECORD.pod_node||R<-Z,
-				 lists:keymember(App,3,R#?RECORD.appl_spec_list)],
-    {ok,PodsApp}.
+%get_pods_based_appl_spec(ApplSpec)->
+%    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+%    PodsApp=[R#?RECORD.pod_node||R<-Z,
+%				 ApplSpec=:=R#?RECORD.appl_spec_list],
+%    {ok,PodsApp}.
     
     
 
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+get_pods_based_app(App)->
+    F = fun() ->
+                Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+                case Z of
+                    [] ->
+			mnesia:abort({error,["empty table "]});
+		    Z->
+			PodsApplSpecs=[{R#?RECORD.pod_node,R#?RECORD.appl_spec_list}||R<-Z],
+			check(PodsApplSpecs,App,[])
+                end
+        end,
+    mnesia:transaction(F).  
+
+
+    
+check([],_,Pods)->
+    Pods;
+check([{Pod,ApplSpecList}|T],WantedApp,Acc) ->
+    L=[Pod||AppSpec<-ApplSpecList,
+	    {ok,WantedApp}==sd:call(db_etcd,db_appl_spec,read,[app,AppSpec],5000)],
+    check(T,WantedApp,lists:append(L,Acc)).     
 
     
 %%--------------------------------------------------------------------
