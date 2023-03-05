@@ -19,7 +19,8 @@
 -export([read_all/0,read/1,read/2,get_all_id/0]).
 -export([do/1]).
 -export([member/1]).
--export([add_appl_list/2,delete_appl_list/2]).
+-export([add_appl_list/2,delete_appl_list/2,
+	 get_pods_based_app/1]).
 
 
 %%--------------------------------------------------------------------
@@ -105,7 +106,22 @@ member(PodNode)->
 	   end,
     Member.
 
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+% ApplList {PodNode,ApplSpec,App}
+get_pods_based_app(App)->
+    Z=do(qlc:q([X || X <- mnesia:table(?TABLE)])),
+    PodsApp=[R#?RECORD.pod_node||R<-Z,
+				 lists:keymember(App,3,R#?RECORD.appl_spec_list)],
+    {ok,PodsApp}.
+    
+    
 
+
+    
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
